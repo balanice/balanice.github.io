@@ -1,6 +1,11 @@
-- name: Home
-  link: /
-- name: About
-  link: /about/
-- name: Blog
-  link: /blog.html
+# name: Home
+#   link: /
+# - name: About
+#   link: /about/
+# - name: Blog
+#   link: /blog.html
+docs:
+  - title: Android
+    children:
+      - title: "adb tips"
+        url: "http://127.0.0.1:4000/android/2021/01/10/adb-tips.html"

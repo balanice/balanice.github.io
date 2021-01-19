@@ -2,12 +2,12 @@
 title: "Android Tips"
 date: 2021-01-11
 tags: Android
-layout: default
+layout: post
 ---
 
 ## Android 部分小技巧
 
-### Android自动弹出软键盘：
+### Android 自动弹出软键盘：
 
 ```java
 Window window = getWindow();
@@ -16,7 +16,7 @@ if (window != null) {
 }
 ```
 
-### 分享一个修复固定屏幕的Bug的一点经验：
+### 分享一个修复固定屏幕的 Bug 的一点经验：
 
 `设置 -> 锁屏、指纹、安全 -> 更多安全设置 -> 屏幕固定`
 
@@ -46,7 +46,7 @@ getWindow.getDecorView.post(new Runnable{
 
 [参照](https://github.com/googlei18n/libphonenumber)
 
-### 修改SearchView的光标
+### 修改 SearchView 的光标
 
 ```java
 try {
@@ -68,9 +68,9 @@ try {
 
 在修改 MK 时经常可以看到使用了 `\` 这个换行连接符，所以实际上，通过换行连接符连接的多行语句其实是一句代码，因此，注释无关内容时要将注释移到该语句的最后，不能直接在某几行中通过 `#` 号注释。
 
-### 锁屏Dialog弹出输入法
+### 锁屏 Dialog 弹出输入法
 
-在锁屏时默认情况下打开时钟后弹出的Dialog无法显示输入法，经搜索后发现Dialog有自己的window 参数，按如下方法修改即可实现锁屏下的Dialog弹出输入法：
+在锁屏时默认情况下打开时钟后弹出的 Dialog 无法显示输入法，经搜索后发现 Dialog 有自己的 window 参数，按如下方法修改即可实现锁屏下的 Dialog 弹出输入法：
 
 ```java
 mEditDialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
@@ -90,7 +90,7 @@ mStopWatchAdapter.notifyItemChanged(p, PAY_LOAD);
 // 去除notifyItemChanged动画
 ((DefaultItemAnimator) mRecyclerView.getItemAnimator()).setSupportsChangeAnimations(false);  
 ```
-### 源码编译OutOfMemory
+### 源码编译 OutOfMemory
 
 ```shell
 export JACK_SERVER_VM_ARGUMENTS="-Dfile.encoding=UTF-8 -XX:+TieredCompilation -Xmx4096m"
@@ -126,11 +126,11 @@ paint.setShader(shader);
 canvas.drawCircle(bounds.centerX(), bounds.centerY(), minDimension / 2, paint);
 ```
 
-### 阿拉伯语下字体对齐问题, 可以研究一下前端css样式之类)
+### 阿拉伯语下字体对齐问题, 可以研究一下前端 css 样式
 
 `android:fontFeatureSettings="tnum"`
 
-### 保持唤醒的Receiver
+### 保持唤醒的 Receiver
 
 WakefulBroadcastReceiver
 
@@ -143,11 +143,11 @@ WakefulBroadcastReceiver
 Handy class for starting a new thread that has a looper. The looper can then be 
 used to create handler classes. Note that `start()` must still be called.
 
-1. HandlerThread将loop转到子线程中处理，说白了就是将分担MainLooper的工作量，降低了主线程的压力，使主界面更流畅。
-2. 开启一个线程起到多个线程的作用。处理任务是串行执行，按消息发送顺序进行处理。HandlerThread本质是一个线程，在线程内部，代码是串行处理的。
+1. HandlerThread 将 loop 转到子线程中处理，说白了就是将分担 MainLooper 的工作量，降低了主线程的压力，使主界面更流畅。
+2. 开启一个线程起到多个线程的作用。处理任务是串行执行，按消息发送顺序进行处理。HandlerThread 本质是一个线程，在线程内部，代码是串行处理的。
 3. 但是由于每一个任务都将以队列的方式逐个被执行到，一旦队列中有某个任务执行时间过长，那么就会导致后续的任务都会被延迟处理。
-4. HandlerThread拥有自己的消息队列，它不会干扰或阻塞UI线程。
-5. 对于网络IO操作，HandlerThread并不适合，因为它只有一个线程，还得排队一个一个等着。
+4. HandlerThread 拥有自己的消息队列，它不会干扰或阻塞UI线程。
+5. 对于网络 IO 操作，HandlerThread 并不适合，因为它只有一个线程，还得排队一个一个等着。
 
 ### 拍照
 

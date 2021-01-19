@@ -36,7 +36,7 @@ exclude:
   - "README.md"
 
 # Theme
-theme: jekyll-theme-cayman
+theme: minima
 
 # Markdown
 markdown: kramdown
@@ -47,7 +47,7 @@ kramdown:
     span:
       line_numbers: false
     block:
-      line_numbers: true
+      line_numbers: false
       start_line: 1
 
 plugins:
