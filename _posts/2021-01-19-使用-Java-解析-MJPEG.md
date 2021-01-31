@@ -7,7 +7,9 @@ tags: [Java, MJPEG]
 
 ## MJPEG 是什么
 
-MJPEG 全名为 "Motion Joint Photographic Experts Group"，是一种视频编码格式，中文名称翻译为“技术即运动静止图像（或逐帧）压缩技术”。MJPEG 广泛应用于非线性编辑领域可精确到帧编辑和多层图像处理，把运动的视频序列作为连续的静止图像来处理，这种压缩方式单独完整地压缩每一帧，在编辑过程中可随机存储每一帧，可进行精确到帧的编辑
+Motion JPEG (M-JPEG 或 MJPEG, Motion Joint Photographic Experts Group, FourCC:MJPG) 是一种影像压缩格式，其中每一帧图像都分别使用 JPEG 编码. MJPEG 常用在数码相机和摄像头之类的图像采集设备上, 非线性剪辑系统也常采用这种格式, 可精确到帧编辑和多层图像处理，把运动的视频序列作为连续的静止图像来处理，这种压缩方式单独完整地压缩每一帧，在编辑过程中可随机存储每一帧，可进行精确到帧的编辑.
+
+QuickTime 播放器和包括 Mozilia Firefox, Google Chrome, Safari 在内许多网页浏览器原生支持 M-JPEG.
 
 如果只是想在前端展示, 直接用 img 标签即可, 例如你有一个地址为 `http://localhost:8964/apple.mjpeg` 的视频流:
 
@@ -17,7 +19,7 @@ MJPEG 全名为 "Motion Joint Photographic Experts Group"，是一种视频编�
 
 ## 如何解析
 
-通过上面介绍我们知道了 MJPEG 是由完整的图片组成的视频流, 我所使用的 MJPEG 是由 jpg 图片组成的, 那么想解析 MJPEG 就要先了解一下 jpg 格式. 找一张 jpg 图片, 使用 `Bless Hex Editor` 或者 `UltraEdit` 打开
+通过上面介绍我们知道了 MJPEG 是由完整的 JPEG 图片组成的视频流, 那么想解析 MJPEG 就要先了解一下 jpg 格式. 找一张 jpg 图片, 使用 `Bless Hex Editor` 或者 `UltraEdit` 打开
 
 ![hex-start]({{ site.baseurl }}/assets/images/2021-01-19-jpg-hex-start.png)
 
