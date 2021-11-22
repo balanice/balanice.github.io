@@ -42,13 +42,11 @@ theme: minima
 markdown: kramdown
 kramdown:
   input: GFM                            # use Github Flavored Markdown !important
-  syntax_highlighter: rouge
+  # header_offset: 2
+  syntax_highlighter: coderay
   syntax_highlighter_opts:
-    span:
-      line_numbers: false
-    block:
-      line_numbers: false
-      start_line: 1
+    # line_numbers: table
+    # bold_every: 5
 
 plugins:
   - jekyll-feed

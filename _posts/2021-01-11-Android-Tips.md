@@ -7,6 +7,12 @@ layout: post
 
 ## Android 部分小技巧
 
+### 启动 Settings 下的 activity, 可以去 Settings 的 action 中查找对应 action
+
+### 添加部分 System App 才能申请的权限时候, 忽略告警
+
+`tools:ignore="Pretected Permissions"`
+
 ### Android 自动弹出软键盘：
 
 ```java
