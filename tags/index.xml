@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tags on Balanice&#39;s Blog</title>
+    <link>https://balanice.github.io/tags/</link>
+    <description>Recent content in Tags on Balanice&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 30 Apr 2022 19:08:19 +0800</lastBuildDate><atom:link href="https://balanice.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Other</title>
+      <link>https://balanice.github.io/tags/other/</link>
+      <pubDate>Sat, 30 Apr 2022 19:08:19 +0800</pubDate>
+      
+      <guid>https://balanice.github.io/tags/other/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>杂七杂八</title>
+      <link>https://balanice.github.io/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/</link>
+      <pubDate>Sat, 30 Apr 2022 19:08:19 +0800</pubDate>
+      
+      <guid>https://balanice.github.io/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>
