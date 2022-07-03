@@ -7,3 +7,14 @@ draft: true
 
 `git clean -dfx`
 
+### git 关联 remote repository
+
+`git remote add origin xxx.git`
+
+### git add submodule
+
+`git submodule add [repository] [localpath]`
+
+### 查看已关联的 repository
+
+`git remote -v`
