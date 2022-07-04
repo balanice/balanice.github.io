@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-us" lang="en-us">
+<head>
+  <link href="https://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.101.0" />
+
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>minicap 使用 &middot; Balanice&#39;s Blog</title>
+  <meta name="description" content="" />
+
+  
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/print.css" media="print">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/poole.css">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/syntax.css">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/hyde.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Abril+Fatface|PT+Sans:400,400i,700">
+
+
+  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+
+  
+  
+</head>
+
+  <body class=" ">
+  <aside class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <a href="https://balanice.github.io/"><h1>Balanice&#39;s Blog</h1></a>
+      <p class="lead">
+       资深 Ctrl C &#43; Ctrl V 程序员 
+      </p>
+    </div>
+
+    <nav>
+      <ul class="sidebar-nav">
+        <li><a href="https://balanice.github.io/">Home</a> </li>
+        <li><a href="https://github.com/balanice/"> balanice </a></li>
+      </ul>
+    </nav>
+
+    <p>tokuu@outlook.com</p>
+  </div>
+</aside>
+
+    <main class="content container">
+    <div class="post">
+  <h1>minicap 使用</h1>
+  <time datetime=2021-02-21T08:12:37&#43;0800 class="post-date">Sun, Feb 21, 2021</time>
+  <h2 id="minicap-是什么">minicap 是什么</h2>
+<p>minicap 是为 Android 系统开发的一款快速输出手机界面的库, 不需要 root 权限. 通过它可以实现超快的截图, 实时显示手机界面. 通常用来开发投屏软件或者远程调试平台.</p>
+<h2 id="minicap-如何启动">minicap 如何启动</h2>
+<p>参考<a href="https://github.com/DeviceFarmer/minicap">官方文档</a></p>
+<h3 id="编译">编译</h3>
+<h4 id="下载-minicap-工程到本地">下载 minicap 工程到本地</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>git submodule init
+</span></span><span style="display:flex;"><span>git submodule update
+</span></span></code></pre></div><h4 id="使用-ndk-编译">使用 NDK 编译</h4>
+<p>minicap 编译需要使用到 NDK, 请先下载好新版 NDK, 并配置好环境变量, 然后使用下面命令编译:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>ndk-build
+</span></span></code></pre></div><p>编译成功后, 可执行文件生成在 <code>./libs</code> 文件夹</p>
+<h3 id="启动">启动</h3>
+<h4 id="查询手机-cpu-架构">查询手机 cpu 架构:</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>ABI<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>adb shell getprop ro.product.cpu.abi | tr -d <span style="color:#e6db74">&#39;\r&#39;</span><span style="color:#66d9ef">)</span>
+</span></span></code></pre></div><h4 id="将对应架构的二进制文件推入手机">将对应架构的二进制文件推入手机:</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>adb push libs/$ABI/minicap /data/local/tmp/
+</span></span></code></pre></div><h4 id="添加可执行权限-部分手机需要">添加可执行权限 (部分手机需要):</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>adb shell chmod <span style="color:#ae81ff">777</span> /data/local/tmp/minicap
+</span></span></code></pre></div><h4 id="推送-minicapso-库-minicapso-需要使用-aosp-源码进行编译-minicap-已经预先编译好了-我们可以直接拿来用">推送 <code>minicap.so</code> 库. <code>minicap.so</code> 需要使用 <code>AOSP</code> 源码进行编译, minicap 已经预先编译好了, 我们可以直接拿来用</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>SDK<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>adb shell getprop ro.build.version.sdk | tr -d <span style="color:#e6db74">&#39;\r&#39;</span><span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>adb push jni/minicap-shared/aosp/libs/android-$SDK/$ABI/minicap.so /data/local/tmp/
+</span></span></code></pre></div><h4 id="查看帮助信息">查看帮助信息</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>adb shell LD_LIBRARY_PATH<span style="color:#f92672">=</span>/data/local/tmp /data/local/tmp/minicap -h
+</span></span></code></pre></div><h4 id="查询手机分辨率">查询手机分辨率</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>adb shell wm size
+</span></span></code></pre></div><h4 id="启动-minicap-通过上一步拿到手机分辨率信息-如-physical-size-1080x1920-那么我们就可以通过如下命令启动-minicap">启动 minicap, 通过上一步拿到手机分辨率信息, 如 <code>Physical size: 1080x1920</code>, 那么我们就可以通过如下命令启动 minicap:</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>adb shell LD_LIBRARY_PATH<span style="color:#f92672">=</span>/data/local/tmp /data/local/tmp/minicap -P 1080x1920@1080x1920/0
+</span></span></code></pre></div><h4 id="创建端口转发-将手机端口映射到本地">创建端口转发, 将手机端口映射到本地</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>adb forward tcp:1313 localabstract:minicap
+</span></span></code></pre></div><h4 id="验证-通过如下命令如果获取到数据-那么就证明-minicap-成功启动">验证, 通过如下命令如果获取到数据, 那么就证明 minicap 成功启动</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>nc localhost <span style="color:#ae81ff">1313</span>
+</span></span></code></pre></div><h2 id="minicap-数据解析">minicap 数据解析</h2>
+<h3 id="minicap-数据协议">minicap 数据协议</h3>
+<p>启动 minicap 后, minicap 会发送一个 24 byte 的头文件, 该头文件只会在启动后发送一次, 之后就是帧数据, 每一帧的前 4 byte 是图像数据按 byte 算的长度, 后面跟着的就是图像数据</p>
+<h4 id="header-结构">Header 结构</h4>
+<table>
+<thead>
+<tr>
+<th>Bytes</th>
+<th>长度</th>
+<th>格式</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>1</td>
+<td>unsigned char</td>
+<td>版本号,目前为1</td>
+</tr>
+<tr>
+<td>1</td>
+<td>1</td>
+<td>unsigned char</td>
+<td>header的长度</td>
+</tr>
+<tr>
+<td>2-5</td>
+<td>4</td>
+<td>unint32(low endian)</td>
+<td>minicap 的 pid</td>
+</tr>
+<tr>
+<td>6-9</td>
+<td>4</td>
+<td>unint32(low endian)</td>
+<td>设备真实宽度</td>
+</tr>
+<tr>
+<td>10-13</td>
+<td>4</td>
+<td>unint32(low endian)</td>
+<td>设备真实高度</td>
+</tr>
+<tr>
+<td>14-17</td>
+<td>4</td>
+<td>unint32(low endian)</td>
+<td>设备虚拟宽度</td>
+</tr>
+<tr>
+<td>18-21</td>
+<td>4</td>
+<td>unint32(low endian)</td>
+<td>设备虚拟高度</td>
+</tr>
+<tr>
+<td>22</td>
+<td>1</td>
+<td>unsigned char</td>
+<td>Display orientation</td>
+</tr>
+<tr>
+<td>23</td>
+<td>1</td>
+<td>unsigned char</td>
+<td>Quirk bitflags (see below)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="帧数据结构">帧数据结构</h4>
+<table>
+<thead>
+<tr>
+<th>Bytes</th>
+<th>Length</th>
+<th>Type</th>
+<th>Explantion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0-3</td>
+<td>4</td>
+<td>uint32(low endian)</td>
+<td>Frame size in bytes(=n)</td>
+</tr>
+<tr>
+<td>4-(n+4)</td>
+<td>n</td>
+<td>unsigned char[]</td>
+<td>Frame in JPG format</td>
+</tr>
+</tbody>
+</table>
+<h3 id="解析-minicap-数据">解析 minicap 数据</h3>
+<p>通过上面的列表, 我们知道了 minicap 中数据的涵义, 把其中的 byte 数据转换为对应格式的数据即可, 这里我们对数据进行解析并保存为本地图片, 代码如下:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> CACHE_SIZE <span style="color:#f92672">=</span> 1024 <span style="color:#f92672">*</span> 1024<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">run</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    Socket socket <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Socket<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>    InetSocketAddress address <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> InetSocketAddress<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;127.0.0.1&#34;</span><span style="color:#f92672">,</span> 1313<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">byte</span><span style="color:#f92672">[]</span> cache <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#66d9ef">byte</span><span style="color:#f92672">[</span>CACHE_SIZE<span style="color:#f92672">];</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">boolean</span> readHead <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> count <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> index <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> imageSize <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        socket<span style="color:#f92672">.</span><span style="color:#a6e22e">connect</span><span style="color:#f92672">(</span>address<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        InputStream inputStream <span style="color:#f92672">=</span> socket<span style="color:#f92672">.</span><span style="color:#a6e22e">getInputStream</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">int</span> read<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">while</span> <span style="color:#f92672">((</span>read <span style="color:#f92672">=</span> inputStream<span style="color:#f92672">.</span><span style="color:#a6e22e">read</span><span style="color:#f92672">(</span>cache<span style="color:#f92672">,</span> index<span style="color:#f92672">,</span> CACHE_SIZE <span style="color:#f92672">-</span> index<span style="color:#f92672">))</span> <span style="color:#f92672">!=</span> <span style="color:#f92672">-</span>1<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 读取头文件
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(!</span>readHead<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">int</span> version <span style="color:#f92672">=</span> cache<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span> <span style="color:#f92672">&amp;</span> 0xFF<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">int</span> size <span style="color:#f92672">=</span> cache<span style="color:#f92672">[</span>1<span style="color:#f92672">]</span> <span style="color:#f92672">&amp;</span> 0xFF<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">int</span> pid <span style="color:#f92672">=</span> Utils<span style="color:#f92672">.</span><span style="color:#a6e22e">byteArrayToInt</span><span style="color:#f92672">(</span>Arrays<span style="color:#f92672">.</span><span style="color:#a6e22e">copyOfRange</span><span style="color:#f92672">(</span>cache<span style="color:#f92672">,</span> 2<span style="color:#f92672">,</span> 6<span style="color:#f92672">));</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">int</span> readWidth <span style="color:#f92672">=</span> Utils<span style="color:#f92672">.</span><span style="color:#a6e22e">byteArrayToInt</span><span style="color:#f92672">(</span>
+</span></span><span style="display:flex;"><span>                        Arrays<span style="color:#f92672">.</span><span style="color:#a6e22e">copyOfRange</span><span style="color:#f92672">(</span>cache<span style="color:#f92672">,</span> 6<span style="color:#f92672">,</span> 10<span style="color:#f92672">));</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">int</span> realHeight <span style="color:#f92672">=</span> Utils<span style="color:#f92672">.</span><span style="color:#a6e22e">byteArrayToInt</span><span style="color:#f92672">(</span>
+</span></span><span style="display:flex;"><span>                        Arrays<span style="color:#f92672">.</span><span style="color:#a6e22e">copyOfRange</span><span style="color:#f92672">(</span>cache<span style="color:#f92672">,</span> 10<span style="color:#f92672">,</span> 14<span style="color:#f92672">));</span>
+</span></span><span style="display:flex;"><span>                logger<span style="color:#f92672">.</span><span style="color:#a6e22e">info</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;version: {}, size: {}, pid: {}, realWidth: {}, 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                        realHeight:{}&#34;</span><span style="color:#f92672">,</span> version<span style="color:#f92672">,</span> size<span style="color:#f92672">,</span> pid<span style="color:#f92672">,</span> readWidth<span style="color:#f92672">,</span> realHeight<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 依次类推 ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                readHead <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                index <span style="color:#f92672">+=</span> read<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">int</span> offset <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">boolean</span> flag <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 一次读取的数据量可能超过一张图片
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#66d9ef">while</span> <span style="color:#f92672">(</span>index <span style="color:#f92672">-</span> offset <span style="color:#f92672">&gt;=</span> imageSize <span style="color:#f92672">+</span> 4<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e">// 获取图片数据大小
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>imageSize <span style="color:#f92672">==</span> 0<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                        imageSize <span style="color:#f92672">=</span> Utils<span style="color:#f92672">.</span><span style="color:#a6e22e">byteArrayToInt</span><span style="color:#f92672">(</span>
+</span></span><span style="display:flex;"><span>                                Arrays<span style="color:#f92672">.</span><span style="color:#a6e22e">copyOfRange</span><span style="color:#f92672">(</span>cache<span style="color:#f92672">,</span> offset<span style="color:#f92672">,</span> offset <span style="color:#f92672">+</span> 4<span style="color:#f92672">));</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>imageSize <span style="color:#f92672">&lt;</span> 0<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                            logger<span style="color:#f92672">.</span><span style="color:#a6e22e">info</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;imageSize: {}&#34;</span><span style="color:#f92672">,</span> imageSize<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#66d9ef">break</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">continue</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>                    offset <span style="color:#f92672">+=</span> 4<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>                    logger<span style="color:#f92672">.</span><span style="color:#a6e22e">info</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;imageSize: {}, index: {}, offset: {}&#34;</span><span style="color:#f92672">,</span> 
+</span></span><span style="display:flex;"><span>                            imageSize<span style="color:#f92672">,</span> index<span style="color:#f92672">,</span> offset<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                    
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e">// 将图片保存至本地
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                    <span style="color:#66d9ef">byte</span><span style="color:#f92672">[]</span> bytes <span style="color:#f92672">=</span> Arrays<span style="color:#f92672">.</span><span style="color:#a6e22e">copyOfRange</span><span style="color:#f92672">(</span>cache<span style="color:#f92672">,</span> offset<span style="color:#f92672">,</span> 
+</span></span><span style="display:flex;"><span>                            offset <span style="color:#f92672">+</span> imageSize<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                    ByteArrayInputStream stream <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ByteArrayInputStream<span style="color:#f92672">(</span>bytes<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                    BufferedImage i <span style="color:#f92672">=</span> ImageIO<span style="color:#f92672">.</span><span style="color:#a6e22e">read</span><span style="color:#f92672">(</span>stream<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                    String filename <span style="color:#f92672">=</span> String<span style="color:#f92672">.</span><span style="color:#a6e22e">format</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;%s%s%d.jpg&#34;</span><span style="color:#f92672">,</span> 
+</span></span><span style="display:flex;"><span>                            <span style="color:#e6db74">&#34;/home/force/Projects/temp&#34;</span><span style="color:#f92672">,</span> File<span style="color:#f92672">.</span><span style="color:#a6e22e">separator</span><span style="color:#f92672">,</span> count<span style="color:#f92672">++);</span>
+</span></span><span style="display:flex;"><span>                    ImageIO<span style="color:#f92672">.</span><span style="color:#a6e22e">write</span><span style="color:#f92672">(</span>i<span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;JPG&#34;</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">new</span> File<span style="color:#f92672">(</span>filename<span style="color:#f92672">));</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                    offset <span style="color:#f92672">+=</span> imageSize<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>                    imageSize <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>                    flag <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 将剩下的数据移动到缓存数组的头部
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>flag<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">for</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> 0<span style="color:#f92672">,</span> j <span style="color:#f92672">=</span> offset<span style="color:#f92672">;</span> i <span style="color:#f92672">&lt;</span> index <span style="color:#f92672">-</span> offset<span style="color:#f92672">;</span> i<span style="color:#f92672">++,</span> j<span style="color:#f92672">++)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                        cache<span style="color:#f92672">[</span>i<span style="color:#f92672">]</span> <span style="color:#f92672">=</span> cache<span style="color:#f92672">[</span>j<span style="color:#f92672">];</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>                    index <span style="color:#f92672">-=</span> offset<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>imageSize <span style="color:#f92672">&lt;</span> 0<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">break</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>IOException e<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        e<span style="color:#f92672">.</span><span style="color:#a6e22e">printStackTrace</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    logger<span style="color:#f92672">.</span><span style="color:#a6e22e">info</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;run end&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// byte[] 与 int 互相转换方法, 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 参考: https://stackoverflow.com/questions/5399798/byte-array-and-int-conversion-in-java
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Utils</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">int</span> <span style="color:#a6e22e">byteArrayToInt</span><span style="color:#f92672">(</span><span style="color:#66d9ef">byte</span><span style="color:#f92672">[]</span> b<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#f92672">(</span>b<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span> <span style="color:#f92672">&amp;</span> 0xFF<span style="color:#f92672">)</span> <span style="color:#f92672">|</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">(</span>b<span style="color:#f92672">[</span>1<span style="color:#f92672">]</span> <span style="color:#f92672">&amp;</span> 0xFF<span style="color:#f92672">)</span> <span style="color:#f92672">&lt;&lt;</span> 8 <span style="color:#f92672">|</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">(</span>b<span style="color:#f92672">[</span>2<span style="color:#f92672">]</span> <span style="color:#f92672">&amp;</span> 0xFF<span style="color:#f92672">)</span> <span style="color:#f92672">&lt;&lt;</span> 16 <span style="color:#f92672">|</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">(</span>b<span style="color:#f92672">[</span>3<span style="color:#f92672">]</span> <span style="color:#f92672">&amp;</span> 0xFF<span style="color:#f92672">)</span> <span style="color:#f92672">&lt;&lt;</span> 24<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">byte</span><span style="color:#f92672">[]</span> <span style="color:#a6e22e">intToByteArray</span><span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> a<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> <span style="color:#66d9ef">byte</span><span style="color:#f92672">[]{</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">(</span><span style="color:#66d9ef">byte</span><span style="color:#f92672">)</span> <span style="color:#f92672">(</span>a <span style="color:#f92672">&amp;</span> 0xFF<span style="color:#f92672">),</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">(</span><span style="color:#66d9ef">byte</span><span style="color:#f92672">)</span> <span style="color:#f92672">((</span>a <span style="color:#f92672">&gt;&gt;</span> 8<span style="color:#f92672">)</span> <span style="color:#f92672">&amp;</span> 0xFF<span style="color:#f92672">),</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">(</span><span style="color:#66d9ef">byte</span><span style="color:#f92672">)</span> <span style="color:#f92672">((</span>a <span style="color:#f92672">&gt;&gt;</span> 16<span style="color:#f92672">)</span> <span style="color:#f92672">&amp;</span> 0xFF<span style="color:#f92672">),</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">(</span><span style="color:#66d9ef">byte</span><span style="color:#f92672">)</span> <span style="color:#f92672">((</span>a <span style="color:#f92672">&gt;&gt;</span> 24<span style="color:#f92672">)</span> <span style="color:#f92672">&amp;</span> 0xFF<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">};</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div>
+</div>
+
+
+    </main>
+
+    
+      
+    
+  </body>
+</html>

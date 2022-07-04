@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>MJPEG on Balanice&#39;s Blog</title>
+    <link>https://balanice.github.io/tags/mjpeg/</link>
+    <description>Recent content in MJPEG on Balanice&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 19 Jan 2021 08:12:37 +0800</lastBuildDate><atom:link href="https://balanice.github.io/tags/mjpeg/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>使用 Java 解析 MJPEG 为 JPG 数组</title>
+      <link>https://balanice.github.io/post/use-java-parse-mjpeg/</link>
+      <pubDate>Tue, 19 Jan 2021 08:12:37 +0800</pubDate>
+      
+      <guid>https://balanice.github.io/post/use-java-parse-mjpeg/</guid>
+      <description>MJPEG 是什么 Motion JPEG (M-JPEG 或 MJPEG, Motion Joint Photographic Experts Group, FourCC:MJPG) 是一种影像压缩格式，其中每一帧图像都分别使用 JPEG 编码. MJPEG 常用在数码相机和摄像头之类的图像采集设备上, 非线性剪辑系统也常采用这种格式, 可精确到帧编辑和多层图像处理，把运动的视频序列作为连续的静止图像来处理，这种压缩方式单独完整地压缩每一帧，在编辑过程中可随机存储每一帧，可进行精确到帧的编辑.
+QuickTime 播放器和包括 Mozilia Firefox, Google Chrome, Safari 在内许多网页浏览器原生支持 M-JPEG.
+如果只是想在前端展示, 直接用 img 标签即可, 例如你有一个地址为 http://localhost:8964/apple.mjpeg 的视频流:
+&amp;lt;img src=&amp;#34;http://localhost:8964/apple.mjpeg&amp;#34; width=&amp;#34;1080&amp;#34; height=&amp;#34;1920&amp;#34;&amp;gt; 如何解析 通过上面介绍我们知道了 MJPEG 是由完整的 JPEG 图片组成的视频流, 那么想解析 MJPEG 就要先了解一下 jpg 格式. 找一张 jpg 图片, 使用 Bless Hex Editor 或者 UltraEdit 打开
+从上图可以看到 jpg 图片的开头是 FF D8
+下拉到结尾, 可以看到 jpg 图片以 FF D9 结尾.</description>
+    </item>
+    
+  </channel>
+</rss>

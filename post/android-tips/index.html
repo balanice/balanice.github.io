@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-us" lang="en-us">
+<head>
+  <link href="https://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.101.0" />
+
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Android Tips &middot; Balanice&#39;s Blog</title>
+  <meta name="description" content="" />
+
+  
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/print.css" media="print">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/poole.css">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/syntax.css">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/hyde.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Abril+Fatface|PT+Sans:400,400i,700">
+
+
+  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+
+  
+  
+</head>
+
+  <body class=" ">
+  <aside class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <a href="https://balanice.github.io/"><h1>Balanice&#39;s Blog</h1></a>
+      <p class="lead">
+       资深 Ctrl C &#43; Ctrl V 程序员 
+      </p>
+    </div>
+
+    <nav>
+      <ul class="sidebar-nav">
+        <li><a href="https://balanice.github.io/">Home</a> </li>
+        <li><a href="https://github.com/balanice/"> balanice </a></li>
+      </ul>
+    </nav>
+
+    <p>tokuu@outlook.com</p>
+  </div>
+</aside>
+
+    <main class="content container">
+    <div class="post">
+  <h1>Android Tips</h1>
+  <time datetime=2021-01-11T08:12:37&#43;0800 class="post-date">Mon, Jan 11, 2021</time>
+  <h2 id="android-部分小技巧">Android 部分小技巧</h2>
+<h3 id="启动-settings-下的-activity-可以去-settings-的-action-中查找对应-action">启动 Settings 下的 activity, 可以去 Settings 的 action 中查找对应 action</h3>
+<h3 id="添加部分-system-app-才能申请的权限时候-忽略告警">添加部分 System App 才能申请的权限时候, 忽略告警</h3>
+<p><code>tools:ignore=&quot;Pretected Permissions&quot;</code></p>
+<h3 id="android-自动弹出软键盘">Android 自动弹出软键盘：</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Window window <span style="color:#f92672">=</span> getWindow<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>window <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>     window<span style="color:#f92672">.</span><span style="color:#a6e22e">setSoftInputMode</span><span style="color:#f92672">(</span>WindowManager<span style="color:#f92672">.</span><span style="color:#a6e22e">LayoutParams</span><span style="color:#f92672">.</span><span style="color:#a6e22e">SOFT_INPUT_STATE_ALWAYS_VISIBLE</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h3 id="分享一个修复固定屏幕的-bug-的一点经验">分享一个修复固定屏幕的 Bug 的一点经验：</h3>
+<p><code>设置 -&gt; 锁屏、指纹、安全 -&gt; 更多安全设置 -&gt; 屏幕固定</code></p>
+<p>现在可以通过最近任务固定屏幕，固定屏幕的意图是只允许用户在一个 Task 内使用手机，这个时候如果有点击事件触发了后台服务的逻辑，可能会出现 Bug</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ActivityManager am <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>ActivityManager<span style="color:#f92672">)</span> getSystemService<span style="color:#f92672">(</span>Context<span style="color:#f92672">.</span><span style="color:#a6e22e">ACTIVITY_SERVICE</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>am<span style="color:#f92672">.</span><span style="color:#a6e22e">getLockTaskModeState</span><span style="color:#f92672">()</span> <span style="color:#f92672">!=</span> ActivityManager<span style="color:#f92672">.</span><span style="color:#a6e22e">LOCK_TASK_MODE_NONE</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 当前处于固定屏幕模式下
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h3 id="android-lazy-load-问题">Android lazy load 问题</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>getWindow<span style="color:#f92672">.</span><span style="color:#a6e22e">getDecorView</span><span style="color:#f92672">.</span><span style="color:#a6e22e">post</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> Runnable<span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">run</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> Handler<span style="color:#f92672">().</span><span style="color:#a6e22e">post</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> Runnable<span style="color:#f92672">{});</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">});</span>
+</span></span></code></pre></div><p>使用上面代码可以滞后加载数据，但是并不能在这里放过多的操作，因为它也是运行在 UI 线程，如加载多个 Fragment, 易造成 ANR，加载一个 Fragment 时候未测出问题</p>
+<h3 id="关于号码格式化及其他号码知识">关于号码格式化及其他号码知识</h3>
+<p><a href="https://github.com/googlei18n/libphonenumber">参照</a></p>
+<h3 id="修改-searchview-的光标">修改 SearchView 的光标</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    Field searchTextField <span style="color:#f92672">=</span> mSearchView<span style="color:#f92672">.</span><span style="color:#a6e22e">getClass</span><span style="color:#f92672">().</span><span style="color:#a6e22e">getDeclaredField</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;mSearchSrcTextView&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">boolean</span> searchTextAccessible <span style="color:#f92672">=</span> searchTextField<span style="color:#f92672">.</span><span style="color:#a6e22e">isAccessible</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>    searchTextField<span style="color:#f92672">.</span><span style="color:#a6e22e">setAccessible</span><span style="color:#f92672">(</span><span style="color:#66d9ef">true</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    TextView searchText <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>TextView<span style="color:#f92672">)</span> searchTextField<span style="color:#f92672">.</span><span style="color:#a6e22e">get</span><span style="color:#f92672">(</span>mSearchView<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    Field cursorDrawableField <span style="color:#f92672">=</span> TextView<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">.</span><span style="color:#a6e22e">getDeclaredField</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;mCursorDrawableRes&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">boolean</span> cursorDrawableAccessible <span style="color:#f92672">=</span> cursorDrawableField<span style="color:#f92672">.</span><span style="color:#a6e22e">isAccessible</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>    cursorDrawableField<span style="color:#f92672">.</span><span style="color:#a6e22e">setAccessible</span><span style="color:#f92672">(</span><span style="color:#66d9ef">true</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    cursorDrawableField<span style="color:#f92672">.</span><span style="color:#a6e22e">set</span><span style="color:#f92672">(</span>searchText<span style="color:#f92672">,</span> R<span style="color:#f92672">.</span><span style="color:#a6e22e">drawable</span><span style="color:#f92672">.</span><span style="color:#a6e22e">ic_search_edit_indicator</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    cursorDrawableField<span style="color:#f92672">.</span><span style="color:#a6e22e">setAccessible</span><span style="color:#f92672">(</span>cursorDrawableAccessible<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    searchTextField<span style="color:#f92672">.</span><span style="color:#a6e22e">setAccessible</span><span style="color:#f92672">(</span>searchTextAccessible<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>NoSuchFieldException <span style="color:#f92672">|</span> IllegalAccessException <span style="color:#f92672">|</span> ClassCastException e<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>     e<span style="color:#f92672">.</span><span style="color:#a6e22e">printStackTrace</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>在修改 MK 时经常可以看到使用了 <code>\</code> 这个换行连接符，所以实际上，通过换行连接符连接的多行语句其实是一句代码，因此，注释无关内容时要将注释移到该语句的最后，不能直接在某几行中通过 <code>#</code> 号注释。</p>
+<h3 id="锁屏-dialog-弹出输入法">锁屏 Dialog 弹出输入法</h3>
+<p>在锁屏时默认情况下打开时钟后弹出的 Dialog 无法显示输入法，经搜索后发现 Dialog 有自己的 window 参数，按如下方法修改即可实现锁屏下的 Dialog 弹出输入法：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>mEditDialog<span style="color:#f92672">.</span><span style="color:#a6e22e">getWindow</span><span style="color:#f92672">().</span><span style="color:#a6e22e">addFlags</span><span style="color:#f92672">(</span>WindowManager<span style="color:#f92672">.</span><span style="color:#a6e22e">LayoutParams</span><span style="color:#f92672">.</span><span style="color:#a6e22e">FLAG_DISMISS_KEYGUARD</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>mEditDialog<span style="color:#f92672">.</span><span style="color:#a6e22e">getWindow</span><span style="color:#f92672">().</span><span style="color:#a6e22e">addFlags</span><span style="color:#f92672">(</span>WindowManager<span style="color:#f92672">.</span><span style="color:#a6e22e">LayoutParams</span><span style="color:#f92672">.</span><span style="color:#a6e22e">FLAG_SHOW_WHEN_LOCKED</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>mEditDialog<span style="color:#f92672">.</span><span style="color:#a6e22e">getWindow</span><span style="color:#f92672">().</span><span style="color:#a6e22e">addFlags</span><span style="color:#f92672">(</span>WindowManager<span style="color:#f92672">.</span><span style="color:#a6e22e">LayoutParams</span><span style="color:#f92672">.</span><span style="color:#a6e22e">FLAG_TURN_SCREEN_ON</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>mEditDialog<span style="color:#f92672">.</span><span style="color:#a6e22e">getWindow</span><span style="color:#f92672">().</span><span style="color:#a6e22e">addFlags</span><span style="color:#f92672">(</span>WindowManager<span style="color:#f92672">.</span><span style="color:#a6e22e">LayoutParams</span><span style="color:#f92672">.</span><span style="color:#a6e22e">FLAG_FULLSCREEN</span><span style="color:#f92672">);</span>
+</span></span></code></pre></div><h3 id="recyclerview">Recyclerview</h3>
+<p>Recyclerview 中使用属性动画时候，在动画结束时记得将使用的属性还原
+RecyclerView 缓存的 view 个数默认为2，但是会增长，最大个数为4</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// 局部刷新
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>mStopWatchAdapter<span style="color:#f92672">.</span><span style="color:#a6e22e">notifyItemChanged</span><span style="color:#f92672">(</span>p<span style="color:#f92672">,</span> PAY_LOAD<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 去除notifyItemChanged动画
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#f92672">((</span>DefaultItemAnimator<span style="color:#f92672">)</span> mRecyclerView<span style="color:#f92672">.</span><span style="color:#a6e22e">getItemAnimator</span><span style="color:#f92672">()).</span><span style="color:#a6e22e">setSupportsChangeAnimations</span><span style="color:#f92672">(</span><span style="color:#66d9ef">false</span><span style="color:#f92672">);</span>  
+</span></span></code></pre></div><h3 id="源码编译-outofmemory">源码编译 OutOfMemory</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>export JACK_SERVER_VM_ARGUMENTS<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;-Dfile.encoding=UTF-8 -XX:+TieredCompilation -Xmx4096m&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>out/host/linux-x86/bin/jack-admin kill-server
+</span></span><span style="display:flex;"><span>out/host/linux-x86/bin/jack-admin start-server
+</span></span></code></pre></div><h3 id="设置圆角矩形的背景">设置圆角矩形的背景</h3>
+<p>在 drawable 文件夹中加入 drawable 的 xml</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;shape</span> <span style="color:#a6e22e">xmlns:android=</span><span style="color:#e6db74">&#34;http://schemas.android.com/apk/res/android&#34;</span><span style="color:#f92672">&gt;</span>;;
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;solid</span> <span style="color:#a6e22e">android:color=</span><span style="color:#e6db74">&#34;@color/tp_header_background_color&#34;</span> <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;corners</span> <span style="color:#a6e22e">android:radius=</span><span style="color:#e6db74">&#34;20dp&#34;</span> <span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/shape&gt;</span>
+</span></span></code></pre></div><p>在代码中如下设置：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Paint paint <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Paint<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>paint<span style="color:#f92672">.</span><span style="color:#a6e22e">setAntiAlias</span><span style="color:#f92672">(</span><span style="color:#66d9ef">true</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>Shader shader <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> LinearGradient<span style="color:#f92672">(</span>bounds<span style="color:#f92672">.</span><span style="color:#a6e22e">centerX</span><span style="color:#f92672">(),</span> 
+</span></span><span style="display:flex;"><span>        bounds<span style="color:#f92672">.</span><span style="color:#a6e22e">centerY</span><span style="color:#f92672">()</span> <span style="color:#f92672">-</span> minDimension <span style="color:#f92672">/</span> 2<span style="color:#f92672">,</span> 
+</span></span><span style="display:flex;"><span>        bounds<span style="color:#f92672">.</span><span style="color:#a6e22e">centerX</span><span style="color:#f92672">(),</span> 
+</span></span><span style="display:flex;"><span>        bounds<span style="color:#f92672">.</span><span style="color:#a6e22e">centerY</span><span style="color:#f92672">()</span> <span style="color:#f92672">+</span> minDimension <span style="color:#f92672">/</span> 2<span style="color:#f92672">,</span> 
+</span></span><span style="display:flex;"><span>        mTopColor<span style="color:#f92672">,</span> 
+</span></span><span style="display:flex;"><span>        mBottomColor<span style="color:#f92672">,</span> 
+</span></span><span style="display:flex;"><span>        Shader<span style="color:#f92672">.</span><span style="color:#a6e22e">TileMode</span><span style="color:#f92672">.</span><span style="color:#a6e22e">MIRROR</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>paint<span style="color:#f92672">.</span><span style="color:#a6e22e">setShader</span><span style="color:#f92672">(</span>shader<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>canvas<span style="color:#f92672">.</span><span style="color:#a6e22e">drawCircle</span><span style="color:#f92672">(</span>bounds<span style="color:#f92672">.</span><span style="color:#a6e22e">centerX</span><span style="color:#f92672">(),</span> bounds<span style="color:#f92672">.</span><span style="color:#a6e22e">centerY</span><span style="color:#f92672">(),</span> minDimension <span style="color:#f92672">/</span> 2<span style="color:#f92672">,</span> paint<span style="color:#f92672">);</span>
+</span></span></code></pre></div><h3 id="阿拉伯语下字体对齐问题-可以研究一下前端-css-样式">阿拉伯语下字体对齐问题, 可以研究一下前端 css 样式</h3>
+<p><code>android:fontFeatureSettings=&quot;tnum&quot;</code></p>
+<h3 id="保持唤醒的-receiver">保持唤醒的 Receiver</h3>
+<p>WakefulBroadcastReceiver</p>
+<h3 id="无背景水波纹效果">无背景水波纹效果</h3>
+<p><code>android:background=&quot;?android:attr/selectableItemBackgroundBorderless&quot;</code></p>
+<h3 id="handlerthread">HandlerThread</h3>
+<p>Handy class for starting a new thread that has a looper. The looper can then be
+used to create handler classes. Note that <code>start()</code> must still be called.</p>
+<ol>
+<li>HandlerThread 将 loop 转到子线程中处理，说白了就是将分担 MainLooper 的工作量，降低了主线程的压力，使主界面更流畅。</li>
+<li>开启一个线程起到多个线程的作用。处理任务是串行执行，按消息发送顺序进行处理。HandlerThread 本质是一个线程，在线程内部，代码是串行处理的。</li>
+<li>但是由于每一个任务都将以队列的方式逐个被执行到，一旦队列中有某个任务执行时间过长，那么就会导致后续的任务都会被延迟处理。</li>
+<li>HandlerThread 拥有自己的消息队列，它不会干扰或阻塞UI线程。</li>
+<li>对于网络 IO 操作，HandlerThread 并不适合，因为它只有一个线程，还得排队一个一个等着。</li>
+</ol>
+<h3 id="拍照">拍照</h3>
+<p>简单实现代码：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Intent intent <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Intent<span style="color:#f92672">(</span>MediaStore<span style="color:#f92672">.</span><span style="color:#a6e22e">ACTION_IMAGE_CAPTURE</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>startActivityForResult<span style="color:#f92672">(</span>intent<span style="color:#f92672">,</span> CAPTURE_TWO<span style="color:#f92672">);</span>
+</span></span></code></pre></div><p>在 <code>onActivityResult</code> 获取 Bitmap：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">onActivityResult</span><span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> requestCode<span style="color:#f92672">,</span> <span style="color:#66d9ef">int</span> resultCode<span style="color:#f92672">,</span> Intent data<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>resultCode <span style="color:#f92672">==</span> RESULT_OK<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">switch</span> <span style="color:#f92672">(</span>requestCode<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">case</span> CAPTURE_ONE<span style="color:#f92672">:</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>data <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">&amp;&amp;</span> data<span style="color:#f92672">.</span><span style="color:#a6e22e">getExtras</span><span style="color:#f92672">()</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                        Bundle extras <span style="color:#f92672">=</span> data<span style="color:#f92672">.</span><span style="color:#a6e22e">getExtras</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>                        Bitmap imageBitmap <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>Bitmap<span style="color:#f92672">)</span> extras<span style="color:#f92672">.</span><span style="color:#a6e22e">get</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;data&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                        btnFirst<span style="color:#f92672">.</span><span style="color:#a6e22e">setBmp</span><span style="color:#f92672">(</span>imageBitmap<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                        changeBindBtnStatus<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>                        mBitmaps<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span> <span style="color:#f92672">=</span> imageBitmap<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span></code></pre></div><p><a href="https://developer.android.google.cn/training/camera/photobasics.html">参考资料</a></p>
+
+</div>
+
+
+    </main>
+
+    
+      
+    
+  </body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-us" lang="en-us">
+<head>
+  <link href="https://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.101.0" />
+
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Android 证书固定(certificate pinning)及如何绕过它 &middot; Balanice&#39;s Blog</title>
+  <meta name="description" content="" />
+
+  
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/print.css" media="print">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/poole.css">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/syntax.css">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/hyde.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Abril+Fatface|PT+Sans:400,400i,700">
+
+
+  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+
+  
+  
+</head>
+
+  <body class=" ">
+  <aside class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <a href="https://balanice.github.io/"><h1>Balanice&#39;s Blog</h1></a>
+      <p class="lead">
+       资深 Ctrl C &#43; Ctrl V 程序员 
+      </p>
+    </div>
+
+    <nav>
+      <ul class="sidebar-nav">
+        <li><a href="https://balanice.github.io/">Home</a> </li>
+        <li><a href="https://github.com/balanice/"> balanice </a></li>
+      </ul>
+    </nav>
+
+    <p>tokuu@outlook.com</p>
+  </div>
+</aside>
+
+    <main class="content container">
+    <div class="post">
+  <h1>Android 证书固定(certificate pinning)及如何绕过它</h1>
+  <time datetime=2022-02-18T08:12:37&#43;0800 class="post-date">Fri, Feb 18, 2022</time>
+  <h2 id="如何配置固定证书">如何配置固定证书</h2>
+<p>从 Android7.0 开始, Android 默认只信任 system 证书, 不再信任 user 及管理员安装的证书. 固定证书则更进一步, 将服务器证书信息存入到 app 中, 在访问后台接口时候, 如果发现后台证书与预置的证书不一致, 就会拒绝访问. 实现证书固定的方式有两种, Android 官方给定的和在代码中设置:</p>
+<h3 id="okhttp设置-certificate-pinning">OkHttp设置 certificate pinning</h3>
+<p>如果不知道网站证书的 sha256 hash 值的话, 可以先填写一个其他网站的, 比如我这里用的就是 google 的, 这个值可以填一个错的, 但千万不能写一个空的, 如 &ldquo;sha/AAA&rdquo;, 否则会触发不了我们想要的效果</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">PinningRequest</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">var</span> client: OkHttpClient? = <span style="color:#66d9ef">null</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> url = <span style="color:#e6db74">&#34;https://api.github.com/api/users/balanice&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> tag = <span style="color:#e6db74">&#34;PinningRequest&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">init</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> pinning = CertificatePinner.Builder()
+</span></span><span style="display:flex;"><span>            .add(<span style="color:#e6db74">&#34;api.github.com&#34;</span>, <span style="color:#e6db74">&#34;sha256/7HIpactkIAq2Y49orFOOQKurWxmmSFZhBCoQYcRhJ3Y=&#34;</span>)
+</span></span><span style="display:flex;"><span>            .build()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        client = OkHttpClient.Builder().certificatePinner(pinning).build()
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">getDetails</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">val</span> request = Request.Builder()
+</span></span><span style="display:flex;"><span>            .url(url)
+</span></span><span style="display:flex;"><span>            .<span style="color:#66d9ef">get</span>()
+</span></span><span style="display:flex;"><span>            .build()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        client<span style="color:#f92672">?.</span>newCall(request)<span style="color:#f92672">?.</span>enqueue(<span style="color:#66d9ef">object</span>: Callback {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onFailure</span>(call: Call, e: IOException) {
+</span></span><span style="display:flex;"><span>                Log.e(tag, e.message.toString())
+</span></span><span style="display:flex;"><span>                e.printStackTrace()
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">onResponse</span>(call: Call, response: Response) {
+</span></span><span style="display:flex;"><span>                Log.i(tag, response.toString())
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        })
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>因为上面我们使用的证书信息与目标网站不一样, 在执行的时候会爆出如下错误, 这里的三个证书就是目标网站的真实证书链, 用前面两个来替换之前的假证书就好了</p>
+<pre tabindex="0"><code>2022-02-19 17:39:15.282 29052-29118/com.force.demo E/PinningRequest: Certificate pinning failure!
+      Peer certificate chain:
+        sha256/azE5Ew0LGsMgkYqiDpYay0olLAS8cxxNGUZ8OJU756k=: CN=*.github.com,O=GitHub\, Inc.,L=San Francisco,ST=California,C=US
+        sha256/vnCogm4QYze/Bc9r88xdA6NTQY74p4BAz2w5gxkLG2M=: CN=DigiCert High Assurance TLS Hybrid ECC SHA256 2020 CA1,O=DigiCert\, Inc.,C=US
+        sha256/WoiWRyIOVNa9ihaBciRSC7XHjliYS9VwUGOIud4PB18=: CN=DigiCert High Assurance EV Root CA,OU=www.digicert.com,O=DigiCert Inc,C=US
+      Pinned certificates for api.github.com:
+        sha256/7HIpactkIAq2Y49orFOOQKurWxmmSFZhBCoQYcRhJ3Y=
+</code></pre><p>将正确的证书加入代码中</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-kotlin" data-lang="kotlin"><span style="display:flex;"><span> <span style="color:#66d9ef">val</span> pinning = CertificatePinner.Builder()
+</span></span><span style="display:flex;"><span>                .add(<span style="color:#e6db74">&#34;api.github.com&#34;</span>, <span style="color:#e6db74">&#34;sha256/azE5Ew0LGsMgkYqiDpYay0olLAS8cxxNGUZ8OJU756k=&#34;</span>)
+</span></span><span style="display:flex;"><span>                .add(<span style="color:#e6db74">&#34;api.github.com&#34;</span>, <span style="color:#e6db74">&#34;sha256/vnCogm4QYze/Bc9r88xdA6NTQY74p4BAz2w5gxkLG2M=&#34;</span>)
+</span></span><span style="display:flex;"><span>                .build()
+</span></span></code></pre></div><h3 id="android-官方配置方法">Android 官方配置方法</h3>
+<p>此方式只适用 Android 7.0+ 的手机, 设置固定证书时候, 应该始终包含一个备用密钥, 这样当更换证书时候不会影响应用的连接性. 此外, 可以设置证书固定的到期时间, 在该时间之后不再固定证书. 这有助于防止尚未更新的应用出现连接性问题. 创建文件 <code>res/xml/network_security_config.xml</code>, 证书可以使用我们上个步骤获取到的</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span>    <span style="color:#75715e">&lt;?xml version=&#34;1.0&#34; encoding=&#34;utf-8&#34;?&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;network-security-config&gt;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&lt;base-config&gt;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">&lt;trust-anchors&gt;</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">&lt;certificates</span> <span style="color:#a6e22e">src=</span><span style="color:#e6db74">&#34;system&#34;</span><span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">&lt;/trust-anchors&gt;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&lt;/base-config&gt;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&lt;domain-config&gt;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">&lt;domain</span> <span style="color:#a6e22e">includeSubdomains=</span><span style="color:#e6db74">&#34;true&#34;</span><span style="color:#f92672">&gt;</span>api.github.com<span style="color:#f92672">&lt;/domain&gt;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">&lt;pin-set</span> <span style="color:#a6e22e">expiration=</span><span style="color:#e6db74">&#34;2022-12-31&#34;</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">&lt;pin</span> <span style="color:#a6e22e">digest=</span><span style="color:#e6db74">&#34;SHA-256&#34;</span><span style="color:#f92672">&gt;</span>azE5Ew0LGsMgkYqiDpYay0olLAS8cxxNGUZ8OJU756k=<span style="color:#f92672">&lt;/pin&gt;</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">&lt;!-- backup pin --&gt;</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">&lt;pin</span> <span style="color:#a6e22e">digest=</span><span style="color:#e6db74">&#34;SHA-256&#34;</span><span style="color:#f92672">&gt;</span>vnCogm4QYze/Bc9r88xdA6NTQY74p4BAz2w5gxkLG2M=<span style="color:#f92672">&lt;/pin&gt;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">&lt;/pin-set&gt;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&lt;/domain-config&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;/network-security-config&gt;</span>
+</span></span></code></pre></div><p>在 manifest.xml 中引用:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#75715e">&lt;?xml version=&#34;1.0&#34; encoding=&#34;utf-8&#34;?&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;manifest</span> <span style="color:#960050;background-color:#1e0010">...</span> <span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;application</span> <span style="color:#a6e22e">android:networkSecurityConfig=</span><span style="color:#e6db74">&#34;@xml/network_security_config&#34;</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#960050;background-color:#1e0010">...</span> <span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span>        ...
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;/application&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/manifest&gt;</span>
+</span></span></code></pre></div><h2 id="绕过-certificate-pinning-对-https-进行抓包">绕过 certificate pinning 对 HTTPS 进行抓包</h2>
+<p>通过前面的了解, 不难发现, 在较新版本的 Android 手机上, 只要手机使用了 certificate pinning, 那么使用代理软件直接对第三方应用 HTTPS 抓包基本是不可能的了, 抓包基本只剩以下方法:</p>
+<ul>
+<li>root 手机, 将抓包软件的证书安装到 system 区;</li>
+<li>对应用进行修改后重新打包, 然后再抓包;</li>
+<li>VirtualXposed 或者在手机上安装虚拟机的方式在华为 Mate30, P30 等 Android10+ 手机上实测用不了;</li>
+</ul>
+<h3 id="使用-apktool-对-apk-进行修改后重新打包-再进行抓包">使用 apktool 对 apk 进行修改后重新打包, 再进行抓包</h3>
+<p>比如我们现有一个 app-debug.apk, 先用 apktool 进行解包</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>apktool d app-debug.apk
+</span></span></code></pre></div><p>在解压后的 <code>app-debug</code> 文件夹中找到对应的 <code>res/xml/network_security_config.xml</code>, 在 base-config 中将 <code>user</code> 证书加入信任</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span>    <span style="color:#f92672">&lt;base-config&gt;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&lt;trust-anchors&gt;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">&lt;certificates</span> <span style="color:#a6e22e">src=</span><span style="color:#e6db74">&#34;user&#34;</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">&lt;certificates</span> <span style="color:#a6e22e">src=</span><span style="color:#e6db74">&#34;system&#34;</span><span style="color:#f92672">/&gt;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&lt;/trust-anchors&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;/base-config&gt;</span>
+</span></span></code></pre></div><p>另外代码中也可能设置了证书, 这就需要找到对应的 smali 代码进行修改了, 情况比较复杂此处不再展开</p>
+
+</div>
+
+
+    </main>
+
+    
+      
+    
+  </body>
+</html>

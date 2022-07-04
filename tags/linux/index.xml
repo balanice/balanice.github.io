@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Linux on Balanice&#39;s Blog</title>
+    <link>https://balanice.github.io/tags/linux/</link>
+    <description>Recent content in Linux on Balanice&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 17 Jan 2021 08:12:37 +0800</lastBuildDate><atom:link href="https://balanice.github.io/tags/linux/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Vim 从入门到放弃</title>
+      <link>https://balanice.github.io/post/vim-from-start-to-abort/</link>
+      <pubDate>Sun, 17 Jan 2021 08:12:37 +0800</pubDate>
+      
+      <guid>https://balanice.github.io/post/vim-from-start-to-abort/</guid>
+      <description>Vim 是什么 Vim - Vi improved, 是 Vi 这个命令行编辑器的优化版本. 它的操作可以不依赖鼠标, 实现文本的快速编辑, 打开大文件毫无压力.
+Vim 怎么用 Vim 基础教程 Vim 自带教程, 在命令行中输入 vimtutor 即可进入, 完成这个教程以后就能掌握 Vim 的基本操作.
+vimrc 配置 学习完成 Vim 的基础操作之后, 就必须学习一下 Vim 的配置, 通过对 Vim 的配置, 可以增强 Vim 的使用体验.
+Vim 的配置文件为 .vimrc, Linux 系统位于 ~/.vimrc, Windows 路径为 C:\Users\username\_vimrc, 如果该路径下没有可以手动创建, 常用配置如下:
+&amp;#34;显示行号 set number &amp;#34;代码高亮 syntax on &amp;#34;启用鼠标 set mouse-=a &amp;#34;自动缩进 set expandtab set tabstop=4 set softtabstop=4 set shiftwidth=4 set backspace=2 set textwidth=79 set autoindent set smartindent	set nocompatible &amp;#34;使用vim自己的键盘 &amp;#34;自动补全括号 :inoremap ( ()&amp;lt;esc&amp;gt;i :inoremap { {}&amp;lt;esc&amp;gt;i :inoremap [ []&amp;lt;esc&amp;gt;i :inoremap &amp;#34; &amp;#34;&amp;#34;&amp;lt;esc&amp;gt;i :inoremap &amp;#39; &amp;#39;&amp;#39;&amp;lt;esc&amp;gt;i &amp;#34;支持中文 set fileencodings=utf-8,gbk set ambiwidth=double &amp;#34;补全函数 ctrl + x ctrl + o &amp;#34;使用pydiction补全python代码 filetype on filetype plugin on filetype indent on autocmd FileType python set omnifunc=pythoncomplete#Complete let g:pydiction_location=&amp;#34;~/.</description>
+    </item>
+    
+  </channel>
+</rss>

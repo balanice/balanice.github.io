@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-us" lang="en-us">
+<head>
+  <link href="https://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.101.0" />
+
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>adb tips &middot; Balanice&#39;s Blog</title>
+  <meta name="description" content="" />
+
+  
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/print.css" media="print">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/poole.css">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/syntax.css">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/hyde.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Abril+Fatface|PT+Sans:400,400i,700">
+
+
+  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+
+  
+  
+</head>
+
+  <body class=" ">
+  <aside class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <a href="https://balanice.github.io/"><h1>Balanice&#39;s Blog</h1></a>
+      <p class="lead">
+       资深 Ctrl C &#43; Ctrl V 程序员 
+      </p>
+    </div>
+
+    <nav>
+      <ul class="sidebar-nav">
+        <li><a href="https://balanice.github.io/">Home</a> </li>
+        <li><a href="https://github.com/balanice/"> balanice </a></li>
+      </ul>
+    </nav>
+
+    <p>tokuu@outlook.com</p>
+  </div>
+</aside>
+
+    <main class="content container">
+    <div class="post">
+  <h1>adb tips</h1>
+  <time datetime=2021-01-10T08:12:37&#43;0800 class="post-date">Sun, Jan 10, 2021</time>
+  <p>参考资料: <a href="https://developer.android.google.cn/studio/command-line/">命令行工具</a></p>
+<h2 id="adb-shell">adb shell</h2>
+<h3 id="am">am</h3>
+<ul>
+<li>发送广播 <code>adb shell am boradcast -a [ACTION]</code> 例如：<code>adb shell am broadcast -a com.force.test.hello</code></li>
+<li>获取Activity启动时间 <code>adb shell am start -W [PACKAGE/.ACTIVITY]</code> 例如:<code>adb shell am start -W com.example/.MainActivity</code></li>
+<li>发送 json 格式的参数, 使用引号包裹 adb shell 后面的语句, 将其当为参数传递 <code>adb shell &quot;am start service '&quot;'{json}'&quot;' -n xxx/.service&quot;</code></li>
+<li>打开设置主页面 <code>adb shell am start com.android.settings/com.android.settings.Settings</code></li>
+</ul>
+<h3 id="svc">svc</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#75715e"># 开启 WiFi</span>
+</span></span><span style="display:flex;"><span>adb shell svc wifi enable
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 关闭 WiFi</span>
+</span></span><span style="display:flex;"><span>adb shell svn wifi disable
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 开启手机数据</span>
+</span></span><span style="display:flex;"><span>adb shell svc data enable
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 关闭手机数据</span>
+</span></span><span style="display:flex;"><span>adb shell svc data disable
+</span></span></code></pre></div><h3 id="dumpsys">dumpsys</h3>
+<p>参考地址:<a href="https://developer.android.google.cn/studio/command-line/dumpsys">dumpsys</a></p>
+<p><code>adb shell dumpsys meminfo &lt;package_name&gt;</code> 命令查看APP内存使用情况</p>
+<p><code>dumpsys</code> 是一个运行在 Android 设备上的可以提供系统服务信息的工具. 可以在命令行通过 adb 工具调用 <code>dumpsys</code> 来获取已连接的设备上面的服务的诊断信息. 这个输出通常比你想象中要更冗长, 可以使用如下描述的命令行选项来筛选你想要的系统服务输出.</p>
+<p><strong>语法:</strong></p>
+<p><code>adb shell dumpsys [-t timeout] [--help | -l | --skip services | service [arguments] | -c | -h]</code></p>
+<p>运行 <code>adb shell dumpsys</code> 命令会输出所有的服务信息.</p>
+<p>dump activity stack 信息:</p>
+<p><code>adb shell dumpsys activity</code></p>
+<p>查询 app 版本:</p>
+<p><code>adb shell dumpsys package [packagename] | grep versionName</code></p>
+<p>查看当前 Activity:</p>
+<p><code>adb shell dumpsys activity | grep mResumed</code></p>
+<p>查看移动网络信号强度:</p>
+<p><code>adb shell dumpsys telephony.registry | grep mSignalStrength</code></p>
+<h3 id="echo">echo</h3>
+<ul>
+<li>输出手机当前时间, 包含毫秒值: <code>adb shell echo \$EPOCHREALTIME</code></li>
+</ul>
+<h3 id="input">input</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>adb shell input text xxx <span style="color:#75715e"># 输入文字</span>
+</span></span><span style="display:flex;"><span>adb shell input tap <span style="color:#ae81ff">540</span> <span style="color:#ae81ff">900</span> <span style="color:#75715e"># 点击坐标</span>
+</span></span><span style="display:flex;"><span>adb shell input swipe <span style="color:#ae81ff">540</span> <span style="color:#ae81ff">900</span> <span style="color:#ae81ff">540</span> <span style="color:#ae81ff">900</span> <span style="color:#75715e"># swipe 输入两个相同的坐标, 也是点击 </span>
+</span></span><span style="display:flex;"><span>adb shell input swipe <span style="color:#ae81ff">540</span> <span style="color:#ae81ff">900</span> <span style="color:#ae81ff">540</span> <span style="color:#ae81ff">900</span> <span style="color:#ae81ff">1000</span> <span style="color:#75715e"># 长按坐标 1s</span>
+</span></span><span style="display:flex;"><span>adb shell input keyevent <span style="color:#ae81ff">82</span> <span style="color:#75715e"># 解锁屏幕</span>
+</span></span></code></pre></div><h3 id="keyevent">keyevent</h3>
+<ul>
+<li>Power   -&gt;  26</li>
+<li>解锁    -&gt;  82</li>
+<li>语音助手 -&gt; 261</li>
+</ul>
+<h3 id="cmd">cmd</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#75715e"># 展开通知栏</span>
+</span></span><span style="display:flex;"><span>adb shell cmd statusbar expand-notification
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 收起通知栏</span>
+</span></span><span style="display:flex;"><span>adb shell cmd statusbar collapse-notification
+</span></span></code></pre></div><h2 id="fastboot-刷机">fastboot 刷机</h2>
+<ul>
+<li>root <code>adb root</code></li>
+<li>以 fastboot 模式启动 <code>adb reboot bootloader</code></li>
+<li>重新挂载 <code>adb remount</code></li>
+<li>fastboot 刷机 <code>fastboot flash [para] [para file]</code></li>
+<li>fastboot OEM 解锁 <code>fastboot oem unlock</code></li>
+<li><code>adb disable-verity</code> 在userdebug 版本中关闭</li>
+</ul>
+<h2 id="文件操作-pullpushsync">文件操作 [pull|push|sync]</h2>
+<ul>
+<li>推送本地文件到手机: <code>adb push [locale file] [remote]</code></li>
+<li>拉取手机文件到本地: <code>adb pull [remote] [locale path]</code></li>
+<li>复制所有有变化的文件到设备中: <code>adb sync [DIR]</code></li>
+</ul>
+<h2 id="logcat">logcat</h2>
+<ul>
+<li>
+<p>抓取指定 app 的 log</p>
+<p><code>adb logcat --pid=$(adb shell pidof -s [packagename])</code> or</p>
+<p><code>adb logcat --pid='adb shell pidof -s [packagename]'</code></p>
+</li>
+<li>
+<p>清除 logcat 缓存</p>
+<p><code>adb logcat -c</code></p>
+</li>
+<li>
+<p>read: unexpected EOF</p>
+<p>解决方法: <code>adb logcat -G 2m</code></p>
+</li>
+</ul>
+<h2 id="启动-adb-server">启动 adb server</h2>
+<ul>
+<li><code>adb -a start-server</code>       启动 adb 并监听所有端口, 某些版本 adb 无法监听本机 IP;</li>
+<li><code>adb -a nodaemon server</code>    将 adb 启动为前台进程, 同时监听本机 IP 的 adb 端口;</li>
+</ul>
+<h2 id="other">Other</h2>
+<ul>
+<li><code>adb shell wm size</code> 获取手机屏幕分辨率</li>
+<li><code>adb shell monkey -v 3</code> 执行 3 次 monkey 操作</li>
+</ul>
+
+</div>
+
+
+    </main>
+
+    
+      
+    
+  </body>
+</html>

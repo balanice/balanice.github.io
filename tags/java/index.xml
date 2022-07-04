@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Java on Balanice&#39;s Blog</title>
+    <link>https://balanice.github.io/tags/java/</link>
+    <description>Recent content in Java on Balanice&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 21 Feb 2021 08:12:37 +0800</lastBuildDate><atom:link href="https://balanice.github.io/tags/java/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>minicap 使用</title>
+      <link>https://balanice.github.io/post/minicap-usage/</link>
+      <pubDate>Sun, 21 Feb 2021 08:12:37 +0800</pubDate>
+      
+      <guid>https://balanice.github.io/post/minicap-usage/</guid>
+      <description>minicap 是什么 minicap 是为 Android 系统开发的一款快速输出手机界面的库, 不需要 root 权限. 通过它可以实现超快的截图, 实时显示手机界面. 通常用来开发投屏软件或者远程调试平台.
+minicap 如何启动 参考官方文档
+编译 下载 minicap 工程到本地 git submodule init git submodule update 使用 NDK 编译 minicap 编译需要使用到 NDK, 请先下载好新版 NDK, 并配置好环境变量, 然后使用下面命令编译:
+ndk-build 编译成功后, 可执行文件生成在 ./libs 文件夹
+启动 查询手机 cpu 架构: ABI=$(adb shell getprop ro.product.cpu.abi | tr -d &amp;#39;\r&amp;#39;) 将对应架构的二进制文件推入手机: adb push libs/$ABI/minicap /data/local/tmp/ 添加可执行权限 (部分手机需要): adb shell chmod 777 /data/local/tmp/minicap 推送 minicap.so 库. minicap.so 需要使用 AOSP 源码进行编译, minicap 已经预先编译好了, 我们可以直接拿来用 SDK=$(adb shell getprop ro.</description>
+    </item>
+    
+    <item>
+      <title>slf4j &#43; logback 记录日志</title>
+      <link>https://balanice.github.io/post/slf4j-and-logback/</link>
+      <pubDate>Sun, 24 Jan 2021 08:12:37 +0800</pubDate>
+      
+      <guid>https://balanice.github.io/post/slf4j-and-logback/</guid>
+      <description>如何使用 Springboot 项目无需安装， 框架中已经集成了 slf4j 和 logback. 创建 src/main/resource/logback.xml 文件， 文件配置如下：
+&amp;lt;configuration&amp;gt; &amp;lt;property name=&amp;#34;LOG_HOME&amp;#34; value=&amp;#34;logs&amp;#34;/&amp;gt; &amp;lt;appender name=&amp;#34;STDOUT&amp;#34; class=&amp;#34;ch.qos.logback.core.ConsoleAppender&amp;#34;&amp;gt; &amp;lt;encoder&amp;gt; &amp;lt;pattern&amp;gt;%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} %line - %msg%n&amp;lt;/pattern&amp;gt; &amp;lt;charset&amp;gt;utf-8&amp;lt;/charset&amp;gt; &amp;lt;/encoder&amp;gt; &amp;lt;/appender&amp;gt; &amp;lt;appender name=&amp;#34;FILE&amp;#34; class=&amp;#34;ch.qos.logback.core.rolling.RollingFileAppender&amp;#34;&amp;gt; &amp;lt;file&amp;gt;${LOG_HOME}/demo.log&amp;lt;/file&amp;gt; &amp;lt;encoder class=&amp;#34;ch.qos.logback.classic.encoder.PatternLayoutEncoder&amp;#34;&amp;gt; &amp;lt;pattern&amp;gt;&amp;#34;%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} %line - %msg%n&amp;#34;&amp;lt;/pattern&amp;gt; &amp;lt;charset&amp;gt;utf-8&amp;lt;/charset&amp;gt; &amp;lt;/encoder&amp;gt; &amp;lt;rollingPolicy class=&amp;#34;ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy&amp;#34;&amp;gt; &amp;lt;fileNamePattern&amp;gt;log/demo-%d{yyyy-MM-dd}_%i.log&amp;lt;/fileNamePattern&amp;gt; &amp;lt;maxFileSize&amp;gt;10MB&amp;lt;/maxFileSize&amp;gt; &amp;lt;/rollingPolicy&amp;gt; &amp;lt;/appender&amp;gt; &amp;lt;root level=&amp;#34;debug&amp;#34;&amp;gt; &amp;lt;appender-ref ref=&amp;#34;STDOUT&amp;#34; /&amp;gt; &amp;lt;appender-ref ref=&amp;#34;FILE&amp;#34; /&amp;gt; &amp;lt;/root&amp;gt; &amp;lt;/configuration&amp;gt; </description>
+    </item>
+    
+    <item>
+      <title>使用 Java 解析 MJPEG 为 JPG 数组</title>
+      <link>https://balanice.github.io/post/use-java-parse-mjpeg/</link>
+      <pubDate>Tue, 19 Jan 2021 08:12:37 +0800</pubDate>
+      
+      <guid>https://balanice.github.io/post/use-java-parse-mjpeg/</guid>
+      <description>MJPEG 是什么 Motion JPEG (M-JPEG 或 MJPEG, Motion Joint Photographic Experts Group, FourCC:MJPG) 是一种影像压缩格式，其中每一帧图像都分别使用 JPEG 编码. MJPEG 常用在数码相机和摄像头之类的图像采集设备上, 非线性剪辑系统也常采用这种格式, 可精确到帧编辑和多层图像处理，把运动的视频序列作为连续的静止图像来处理，这种压缩方式单独完整地压缩每一帧，在编辑过程中可随机存储每一帧，可进行精确到帧的编辑.
+QuickTime 播放器和包括 Mozilia Firefox, Google Chrome, Safari 在内许多网页浏览器原生支持 M-JPEG.
+如果只是想在前端展示, 直接用 img 标签即可, 例如你有一个地址为 http://localhost:8964/apple.mjpeg 的视频流:
+&amp;lt;img src=&amp;#34;http://localhost:8964/apple.mjpeg&amp;#34; width=&amp;#34;1080&amp;#34; height=&amp;#34;1920&amp;#34;&amp;gt; 如何解析 通过上面介绍我们知道了 MJPEG 是由完整的 JPEG 图片组成的视频流, 那么想解析 MJPEG 就要先了解一下 jpg 格式. 找一张 jpg 图片, 使用 Bless Hex Editor 或者 UltraEdit 打开
+从上图可以看到 jpg 图片的开头是 FF D8
+下拉到结尾, 可以看到 jpg 图片以 FF D9 结尾.</description>
+    </item>
+    
+  </channel>
+</rss>

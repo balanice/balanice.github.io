@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>SpringBoot on Balanice&#39;s Blog</title>
+    <link>https://balanice.github.io/categories/springboot/</link>
+    <description>Recent content in SpringBoot on Balanice&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 27 Mar 2021 08:12:37 +0800</lastBuildDate><atom:link href="https://balanice.github.io/categories/springboot/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>使用 minicap 搭建远程操作网站</title>
+      <link>https://balanice.github.io/post/use-minicap-build-test-server/</link>
+      <pubDate>Sat, 27 Mar 2021 08:12:37 +0800</pubDate>
+      
+      <guid>https://balanice.github.io/post/use-minicap-build-test-server/</guid>
+      <description>技术选型 我们本次使用 minicap 获取手机屏幕内容, 使用 SpringBoot 实现网站服务, ddmlib 来对手机进行操作, WebSocket 传输图片数据, JavaScript + Html 实现前端界面.
+实现 添加依赖 &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.springframework.boot&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;spring-boot-starter-websocket&amp;lt;/artifactId&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;com.android.tools.ddms&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;ddmlib&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;27.1.3&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; 创建 WebSocket 服务端 使用 WebSocket 传输数据, 在连接上时候启动 minicap, 接受并解析 minicap 数据, 在检测到 WebSocket 关闭或发生错误时候关闭 minicap, 代码如下: @Component @ServerEndpoint(&amp;#34;/screen&amp;#34;) public class MiniWebSocket { private static final Logger logger = LoggerFactory.getLogger(MiniWebSocket.class); @OnOpen public void onOpen(Session session) { logger.info(&amp;#34;onOpen&amp;#34;); SpringContextUtil.getBean(DeviceService.class).startScreen(session); } @OnMessage public void onMessage(Session session, String message) { logger.</description>
+    </item>
+    
+  </channel>
+</rss>
