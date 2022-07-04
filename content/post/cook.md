@@ -1,7 +1,7 @@
 ---
 title: "家庭煮夫记录"
 date: 2022-04-30T19:08:19+08:00
-draft: true
+draft: false
 tags: ["Other", "杂七杂八"]
 categories: ["Other", "杂七杂八"]
 ---

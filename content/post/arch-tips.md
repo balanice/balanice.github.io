@@ -1,7 +1,7 @@
 ---
-title: "Arch Tips"
+title: "ArchLinux Tips"
 date: 2022-07-02T08:12:37+08:00
-draft: true
+draft: false
 ---
 
 ## AUR (Arch User Repository) 使用

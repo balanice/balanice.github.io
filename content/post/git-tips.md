@@ -1,7 +1,7 @@
 ---
 title: "Git Tips"
 date: 2022-07-02T08:09:37+08:00
-draft: true
+draft: false
 ---
 ### git 删除未跟踪文件
 
