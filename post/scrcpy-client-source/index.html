@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-us" lang="en-us">
+<head>
+  <link href="https://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.101.0" />
+
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>scrcpy 客户端源码阅读 &middot; Balanice&#39;s Blog</title>
+  <meta name="description" content="" />
+
+  
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/print.css" media="print">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/poole.css">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/syntax.css">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/hyde.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Abril+Fatface|PT+Sans:400,400i,700">
+
+
+  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+
+  
+  
+</head>
+
+  <body class=" ">
+  <aside class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <a href="https://balanice.github.io/"><h1>Balanice&#39;s Blog</h1></a>
+      <p class="lead">
+       资深 Ctrl C &#43; Ctrl V 程序员 
+      </p>
+    </div>
+
+    <nav>
+      <ul class="sidebar-nav">
+        <li><a href="https://balanice.github.io/">Home</a> </li>
+        <li><a href="https://github.com/balanice/"> balanice </a></li>
+      </ul>
+    </nav>
+
+    <p>tokuu@outlook.com</p>
+  </div>
+</aside>
+
+    <main class="content container">
+    <div class="post">
+  <h1>scrcpy 客户端源码阅读</h1>
+  <time datetime=2022-07-06T08:09:37&#43;0800 class="post-date">Wed, Jul 6, 2022</time>
+  <p><a href="https://github.com/Genymobile/scrcpy">scrcpy</a> 是一款提供投屏和操作 Android 设备的开源软件, 无需 root. 其源码分为 client 和 server 两部分, client 位于 app/ 目录中, 由 C 实现, server 位于 server/ 目录, 由 Java 实现. 本文基于 <code>scrcpy-1.17</code>.</p>
+<p>client 程序入口位于 <code>main.c</code> 的 <code>main()</code> 函数, 调用了 <code>scrcpy()</code> 函数:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C" data-lang="C"><span style="display:flex;"><span><span style="color:#66d9ef">int</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">main</span>(<span style="color:#66d9ef">int</span> argc, <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>argv[]) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">//...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">//...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> res <span style="color:#f92672">=</span> scrcpy(<span style="color:#f92672">&amp;</span>args.opts) <span style="color:#f92672">?</span> <span style="color:#ae81ff">0</span> <span style="color:#f92672">:</span> <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    avformat_network_deinit(); <span style="color:#75715e">// ignore failure
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> res;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="scrcpy">scrcpy()</h3>
+<p><code>scrcpy()</code> 函数位于 <code>scrcpy.c</code>, 我们定位到这里看看这个函数做了什么:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C" data-lang="C"><span style="display:flex;"><span><span style="color:#66d9ef">bool</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">scrcpy</span>(<span style="color:#66d9ef">const</span> <span style="color:#66d9ef">struct</span> scrcpy_options <span style="color:#f92672">*</span>options) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>server_init(<span style="color:#f92672">&amp;</span>server)) {    <span style="color:#75715e">// 初始化 server
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">return</span> false;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 启动 server
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>server_start(<span style="color:#f92672">&amp;</span>server, options<span style="color:#f92672">-&gt;</span>serial, <span style="color:#f92672">&amp;</span>params)) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">goto</span> end;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    server_started <span style="color:#f92672">=</span> true;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 初始化 SDL
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>sdl_init_and_configure(options<span style="color:#f92672">-&gt;</span>display, options<span style="color:#f92672">-&gt;</span>render_driver,
+</span></span><span style="display:flex;"><span>                                options<span style="color:#f92672">-&gt;</span>disable_screensaver)) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">goto</span> end;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 通过 socket 连接上面启动的 server
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>server_connect_to(<span style="color:#f92672">&amp;</span>server)) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">goto</span> end;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">char</span> device_name[DEVICE_NAME_FIELD_LENGTH];
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> size frame_size;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// screenrecord does not send frames when the screen content does not
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// change therefore, we transmit the screen size before the video stream,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// to be able to init the window immediately
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// 当屏幕内容没有变化的时候, screenrecord 不会发送视频帧, 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// 所以发送视频流之前会发送一个屏幕尺寸数据, 用来初始化窗口
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>device_read_info(server.video_socket, device_name, <span style="color:#f92672">&amp;</span>frame_size)) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">goto</span> end;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> decoder <span style="color:#f92672">*</span>dec <span style="color:#f92672">=</span> NULL;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (options<span style="color:#f92672">-&gt;</span>display) {     <span style="color:#75715e">// 是否显示屏幕
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>fps_counter_init(<span style="color:#f92672">&amp;</span>fps_counter)) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">goto</span> end;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        fps_counter_initialized <span style="color:#f92672">=</span> true;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>video_buffer_init(<span style="color:#f92672">&amp;</span>video_buffer, <span style="color:#f92672">&amp;</span>fps_counter,
+</span></span><span style="display:flex;"><span>                               options<span style="color:#f92672">-&gt;</span>render_expired_frames)) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">goto</span> end;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        video_buffer_initialized <span style="color:#f92672">=</span> true;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (options<span style="color:#f92672">-&gt;</span>control) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>file_handler_init(<span style="color:#f92672">&amp;</span>file_handler, server.serial,
+</span></span><span style="display:flex;"><span>                                   options<span style="color:#f92672">-&gt;</span>push_target)) {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">goto</span> end;
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            file_handler_initialized <span style="color:#f92672">=</span> true;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 初始化解码器, 底层由 ffmpeg 实现
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        decoder_init(<span style="color:#f92672">&amp;</span>decoder, <span style="color:#f92672">&amp;</span>video_buffer);
+</span></span><span style="display:flex;"><span>        dec <span style="color:#f92672">=</span> <span style="color:#f92672">&amp;</span>decoder;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">struct</span> recorder <span style="color:#f92672">*</span>rec <span style="color:#f92672">=</span> NULL;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (record) {   <span style="color:#75715e">// 是否记录为文件
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>recorder_init(<span style="color:#f92672">&amp;</span>recorder,
+</span></span><span style="display:flex;"><span>                           options<span style="color:#f92672">-&gt;</span>record_filename,
+</span></span><span style="display:flex;"><span>                           options<span style="color:#f92672">-&gt;</span>record_format,
+</span></span><span style="display:flex;"><span>                           frame_size)) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">goto</span> end;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        rec <span style="color:#f92672">=</span> <span style="color:#f92672">&amp;</span>recorder;
+</span></span><span style="display:flex;"><span>        recorder_initialized <span style="color:#f92672">=</span> true;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    av_log_set_callback(av_log_callback);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    stream_init(<span style="color:#f92672">&amp;</span>stream, server.video_socket, dec, rec);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// now we consumed the header values, the socket receives the video stream
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// start the stream
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// 消费 header, socket 接收到了视频流
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>stream_start(<span style="color:#f92672">&amp;</span>stream)) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">goto</span> end;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    stream_started <span style="color:#f92672">=</span> true;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>    input_manager_init(<span style="color:#f92672">&amp;</span>input_manager, options);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">bool</span> ret <span style="color:#f92672">=</span> event_loop(options);
+</span></span><span style="display:flex;"><span>    LOGD(<span style="color:#e6db74">&#34;quit...&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    screen_destroy(<span style="color:#f92672">&amp;</span>screen);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>end:
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// stop stream and controller so that they don&#39;t continue once their socket
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// is shutdown
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> (stream_started) {
+</span></span><span style="display:flex;"><span>        stream_stop(<span style="color:#f92672">&amp;</span>stream);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (controller_started) {
+</span></span><span style="display:flex;"><span>        controller_stop(<span style="color:#f92672">&amp;</span>controller);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>    server_destroy(<span style="color:#f92672">&amp;</span>server);    <span style="color:#75715e">// 关闭 server
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> ret;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="server_startserver-options-serial-params-启动-server">server_start(&amp;server, options-&gt;serial, &amp;params) 启动 server</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C" data-lang="C"><span style="display:flex;"><span><span style="color:#66d9ef">bool</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">server_start</span>(<span style="color:#66d9ef">struct</span> server <span style="color:#f92672">*</span>server, <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>serial,
+</span></span><span style="display:flex;"><span>             <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">struct</span> server_params <span style="color:#f92672">*</span>params) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>push_server(serial)) { <span style="color:#75715e">// 将 server push 到手机上
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">goto</span> error1;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 开启端口转发
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>enable_tunnel_any_port(server, params<span style="color:#f92672">-&gt;</span>port_range,
+</span></span><span style="display:flex;"><span>                                params<span style="color:#f92672">-&gt;</span>force_adb_forward)) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">goto</span> error1;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// server will connect to our server socket
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// 启动 server
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    server<span style="color:#f92672">-&gt;</span>process <span style="color:#f92672">=</span> execute_server(server, params);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (server<span style="color:#f92672">-&gt;</span>process <span style="color:#f92672">==</span> PROCESS_NONE) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">goto</span> error2;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><h3 id="push_serverserial-将-scrcpy-server-push-到-android-设备上">push_server(serial) 将 scrcpy-server push 到 Android 设备上</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C" data-lang="C"><span style="display:flex;"><span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">bool</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">push_server</span>(<span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>serial) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>server_path <span style="color:#f92672">=</span> get_server_path();
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>server_path) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> false;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>is_regular_file(server_path)) {
+</span></span><span style="display:flex;"><span>        LOGE(<span style="color:#e6db74">&#34;&#39;%s&#39; does not exist or is not a regular file</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, server_path);
+</span></span><span style="display:flex;"><span>        SDL_free(server_path);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> false;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    process_t process <span style="color:#f92672">=</span> adb_push(serial, server_path, DEVICE_SERVER_PATH);
+</span></span><span style="display:flex;"><span>    SDL_free(server_path);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> process_check_success(process, <span style="color:#e6db74">&#34;adb push&#34;</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这一步是通过 adb 将 scrcpy-server push 到 <code>/data/local/tmp/scrcpy-server.jar</code></p>
+<h3 id="enable_tunnel_any_port-开启端口转发">enable_tunnel_any_port() 开启端口转发</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C" data-lang="C"><span style="display:flex;"><span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">bool</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">enable_tunnel_any_port</span>(<span style="color:#66d9ef">struct</span> server <span style="color:#f92672">*</span>server, <span style="color:#66d9ef">struct</span> sc_port_range port_range,
+</span></span><span style="display:flex;"><span>                       <span style="color:#66d9ef">bool</span> force_adb_forward) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>force_adb_forward) {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Attempt to use &#34;adb reverse&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> (enable_tunnel_reverse_any_port(server, port_range)) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> true;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// if &#34;adb reverse&#34; does not work (e.g. over &#34;adb connect&#34;), it
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// fallbacks to &#34;adb forward&#34;, so the app socket is the client
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>        LOGW(<span style="color:#e6db74">&#34;&#39;adb reverse&#39; failed, fallback to &#39;adb forward&#39;&#34;</span>);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> enable_tunnel_forward_any_port(server, port_range);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这一步是通过 <code>adb reverse</code> 或者 <code>adb forward</code> 创建端口转发, 后续通过 socket 与 server 端建立连接.</p>
+<h3 id="execute_serverserver-params-启动-server">execute_server(server, params) 启动 server</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C" data-lang="C"><span style="display:flex;"><span><span style="color:#66d9ef">static</span> process_t
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">execute_server</span>(<span style="color:#66d9ef">struct</span> server <span style="color:#f92672">*</span>server, <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">struct</span> server_params <span style="color:#f92672">*</span>params) {
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span><span style="color:#66d9ef">const</span> cmd[] <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;shell&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;CLASSPATH=&#34;</span> DEVICE_SERVER_PATH,
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;app_process&#34;</span>,
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#ifdef SERVER_DEBUGGER
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"># define SERVER_DEBUGGER_PORT &#34;5005&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"># ifdef SERVER_DEBUGGER_METHOD_NEW
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">/* Android 9 and above */</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;-XjdwpProvider:internal -XjdwpOptions:transport=dt_socket,suspend=y,server=y,address=&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># else
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">/* Android 8 and below */</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;-agentlib:jdwp=transport=dt_socket,suspend=y,server=y,address=&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># endif
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            SERVER_DEBUGGER_PORT,
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#endif
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#e6db74">&#34;/&#34;</span>, <span style="color:#75715e">// unused
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#e6db74">&#34;com.genymobile.scrcpy.Server&#34;</span>,
+</span></span><span style="display:flex;"><span>        SCRCPY_VERSION,
+</span></span><span style="display:flex;"><span>        log_level_to_server_string(params<span style="color:#f92672">-&gt;</span>log_level),
+</span></span><span style="display:flex;"><span>        max_size_string,
+</span></span><span style="display:flex;"><span>        bit_rate_string,
+</span></span><span style="display:flex;"><span>        max_fps_string,
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> adb_execute(server<span style="color:#f92672">-&gt;</span>serial, cmd, <span style="color:#66d9ef">sizeof</span>(cmd) <span style="color:#f92672">/</span> <span style="color:#66d9ef">sizeof</span>(cmd[<span style="color:#ae81ff">0</span>]));
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这个函数是通过 <code>adb shell CLASSPATH=/data/local/tmp/scrcpy-server.jar app_process / ...</code> 命令启动 <code>scrcpy-server</code></p>
+<h2 id="server_connect_toserver-创建连接-server-的-socket">server_connect_to(&amp;server) 创建连接 server 的 socket</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C" data-lang="C"><span style="display:flex;"><span><span style="color:#66d9ef">bool</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">server_connect_to</span>(<span style="color:#66d9ef">struct</span> server <span style="color:#f92672">*</span>server) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 未使用 adb forward
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>server<span style="color:#f92672">-&gt;</span>tunnel_forward) {
+</span></span><span style="display:flex;"><span>        server<span style="color:#f92672">-&gt;</span>video_socket <span style="color:#f92672">=</span> net_accept(server<span style="color:#f92672">-&gt;</span>server_socket);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (server<span style="color:#f92672">-&gt;</span>video_socket <span style="color:#f92672">==</span> INVALID_SOCKET) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> false;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        server<span style="color:#f92672">-&gt;</span>control_socket <span style="color:#f92672">=</span> net_accept(server<span style="color:#f92672">-&gt;</span>server_socket);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (server<span style="color:#f92672">-&gt;</span>control_socket <span style="color:#f92672">==</span> INVALID_SOCKET) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// the video_socket will be cleaned up on destroy
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#66d9ef">return</span> false;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// we don&#39;t need the server socket anymore
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>atomic_flag_test_and_set(<span style="color:#f92672">&amp;</span>server<span style="color:#f92672">-&gt;</span>server_socket_closed)) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// close it from here
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            close_socket(server<span style="color:#f92672">-&gt;</span>server_socket);
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// otherwise, it is closed by run_wait_server()
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        }
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">else</span> {    <span style="color:#75715e">// 使用 adb forward
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">uint32_t</span> attempts <span style="color:#f92672">=</span> <span style="color:#ae81ff">100</span>;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">uint32_t</span> delay <span style="color:#f92672">=</span> <span style="color:#ae81ff">100</span>; <span style="color:#75715e">// ms
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// 与 server 连接的第一个 socket, 传输视频流
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        server<span style="color:#f92672">-&gt;</span>video_socket <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>            connect_to_server(server<span style="color:#f92672">-&gt;</span>local_port, attempts, delay);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (server<span style="color:#f92672">-&gt;</span>video_socket <span style="color:#f92672">==</span> INVALID_SOCKET) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> false;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// we know that the device is listening, we don&#39;t need several attempts
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// 与 server 连接的第二个 socket, 传输控制命令
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        server<span style="color:#f92672">-&gt;</span>control_socket <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>            net_connect(IPV4_LOCALHOST, server<span style="color:#f92672">-&gt;</span>local_port);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (server<span style="color:#f92672">-&gt;</span>control_socket <span style="color:#f92672">==</span> INVALID_SOCKET) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> false;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><p>这个函数根据使用的 <code>adb reverse</code> 或者 <code>adb forward</code> 与 <code>scrcpy-server</code> 建立两个 socket 连接, 第一个传输视频流, 第二个则是传输控制命令. 其中 <code>connect_to_server()</code> 函数使用了一个 <code>connect_and_read_byte()</code> 的函数:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C" data-lang="C"><span style="display:flex;"><span><span style="color:#66d9ef">static</span> socket_t
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">connect_and_read_byte</span>(<span style="color:#66d9ef">uint16_t</span> port) {
+</span></span><span style="display:flex;"><span>    socket_t socket <span style="color:#f92672">=</span> net_connect(IPV4_LOCALHOST, port);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (socket <span style="color:#f92672">==</span> INVALID_SOCKET) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> INVALID_SOCKET;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">char</span> byte;
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// the connection may succeed even if the server behind the &#34;adb tunnel&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// is not listening, so read one byte to detect a working connection
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> (net_recv(socket, <span style="color:#f92672">&amp;</span>byte, <span style="color:#ae81ff">1</span>) <span style="color:#f92672">!=</span> <span style="color:#ae81ff">1</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// the server is not listening yet behind the adb tunnel
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        net_close(socket);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> INVALID_SOCKET;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> socket;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>在执行了 <code>adb tunnel</code> 之后的 <code>scrcpy-server</code> 可能还未完全启动并监听, 但此时通过 socket 连接已转发的端口仍然是成功的, 所以此处需要读取 1 byte 的数据来确认 <code>scrcpy-server</code> 是否成功启动, 如果未启动成功, 则需要重新连接.</p>
+<h2 id="device_read_info-读取在视频流数据前发出的帧分辨率数据">device_read_info() 读取在视频流数据前发出的帧分辨率数据</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C" data-lang="C"><span style="display:flex;"><span><span style="color:#66d9ef">bool</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">device_read_info</span>(socket_t device_socket, <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>device_name, <span style="color:#66d9ef">struct</span> size <span style="color:#f92672">*</span>size) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">char</span> buf[DEVICE_NAME_FIELD_LENGTH <span style="color:#f92672">+</span> <span style="color:#ae81ff">4</span>];
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> r <span style="color:#f92672">=</span> net_recv_all(device_socket, buf, <span style="color:#66d9ef">sizeof</span>(buf));
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (r <span style="color:#f92672">&lt;</span> DEVICE_NAME_FIELD_LENGTH <span style="color:#f92672">+</span> <span style="color:#ae81ff">4</span>) {
+</span></span><span style="display:flex;"><span>        LOGE(<span style="color:#e6db74">&#34;Could not retrieve device information&#34;</span>);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> false;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// in case the client sends garbage
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    buf[DEVICE_NAME_FIELD_LENGTH <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;\0&#39;</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// strcpy is safe here, since name contains at least
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// DEVICE_NAME_FIELD_LENGTH bytes and strlen(buf) &lt; DEVICE_NAME_FIELD_LENGTH
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    strcpy(device_name, (<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>) buf);
+</span></span><span style="display:flex;"><span>    size<span style="color:#f92672">-&gt;</span>width <span style="color:#f92672">=</span> (buf[DEVICE_NAME_FIELD_LENGTH] <span style="color:#f92672">&lt;&lt;</span> <span style="color:#ae81ff">8</span>)
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">|</span> buf[DEVICE_NAME_FIELD_LENGTH <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>];
+</span></span><span style="display:flex;"><span>    size<span style="color:#f92672">-&gt;</span>height <span style="color:#f92672">=</span> (buf[DEVICE_NAME_FIELD_LENGTH <span style="color:#f92672">+</span> <span style="color:#ae81ff">2</span>] <span style="color:#f92672">&lt;&lt;</span> <span style="color:#ae81ff">8</span>)
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">|</span> buf[DEVICE_NAME_FIELD_LENGTH <span style="color:#f92672">+</span> <span style="color:#ae81ff">3</span>];
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> true;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>这里读取 64 + 4 个 byte 数据, 最后 4 个 byte 数据记录了视频帧的宽高.</p>
+<h2 id="stream_start-接收并解析视频流">stream_start() 接收并解析视频流</h2>
+<p>此处通过 SDL 创建了一个线程, 用来接收和解析 h264 视频流</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C" data-lang="C"><span style="display:flex;"><span><span style="color:#66d9ef">bool</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">stream_start</span>(<span style="color:#66d9ef">struct</span> stream <span style="color:#f92672">*</span>stream) {
+</span></span><span style="display:flex;"><span>    LOGD(<span style="color:#e6db74">&#34;Starting stream thread&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    stream<span style="color:#f92672">-&gt;</span><span style="color:#66d9ef">thread</span> <span style="color:#f92672">=</span> SDL_CreateThread(run_stream, <span style="color:#e6db74">&#34;stream&#34;</span>, stream);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>stream<span style="color:#f92672">-&gt;</span><span style="color:#66d9ef">thread</span>) {
+</span></span><span style="display:flex;"><span>        LOGC(<span style="color:#e6db74">&#34;Could not start stream thread&#34;</span>);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> false;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> true;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>run_stream()</code> 函数中调用了一个 <code>stream_recv_packat()</code> 的函数:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C" data-lang="C"><span style="display:flex;"><span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">bool</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">stream_recv_packet</span>(<span style="color:#66d9ef">struct</span> stream <span style="color:#f92672">*</span>stream, AVPacket <span style="color:#f92672">*</span>packet) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// The video stream contains raw packets, without time information. When we
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// record, we retrieve the timestamps separately, from a &#34;meta&#34; header
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// added by the server before each raw packet.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">//
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// The &#34;meta&#34; header length is 12 bytes:
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// [. . . . . . . .|. . . .]. . . . . . . . . . . . . . . ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">//  &lt;-------------&gt; &lt;-----&gt; &lt;-----------------------------...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">//        PTS        packet        raw packet
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">//                    size
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">//
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// It is followed by &lt;packet_size&gt; bytes containing the packet/frame.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint8_t</span> header[HEADER_SIZE];
+</span></span><span style="display:flex;"><span>    ssize_t r <span style="color:#f92672">=</span> net_recv_all(stream<span style="color:#f92672">-&gt;</span>socket, header, HEADER_SIZE);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (r <span style="color:#f92672">&lt;</span> HEADER_SIZE) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> false;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint64_t</span> pts <span style="color:#f92672">=</span> buffer_read64be(header);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">uint32_t</span> len <span style="color:#f92672">=</span> buffer_read32be(<span style="color:#f92672">&amp;</span>header[<span style="color:#ae81ff">8</span>]);
+</span></span><span style="display:flex;"><span>    assert(pts <span style="color:#f92672">==</span> NO_PTS <span style="color:#f92672">||</span> (pts <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0x8000000000000000</span>) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>);
+</span></span><span style="display:flex;"><span>    assert(len);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>从注释可以看出, 每一个 h264 raw 数据帧前面都有一个 12 byte 的 meta 数据, 前面 8 byte 记录 PTS, 后面 4 byte 记录 raw 数据的大小.</p>
+<h2 id="controller_startcontroller-创建并启动接收控制命令的线程">controller_start(&amp;controller) 创建并启动接收控制命令的线程</h2>
+<p>这里最终调用了 <code>controller.c</code> 中的 <code>process_msg()</code> 函数:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C" data-lang="C"><span style="display:flex;"><span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">bool</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">process_msg</span>(<span style="color:#66d9ef">struct</span> controller <span style="color:#f92672">*</span>controller,
+</span></span><span style="display:flex;"><span>              <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">struct</span> control_msg <span style="color:#f92672">*</span>msg) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">char</span> serialized_msg[CONTROL_MSG_MAX_SIZE];
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> length <span style="color:#f92672">=</span> control_msg_serialize(msg, serialized_msg);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>length) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> false;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> w <span style="color:#f92672">=</span> net_send_all(controller<span style="color:#f92672">-&gt;</span>control_socket, serialized_msg, length);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> w <span style="color:#f92672">==</span> length;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>将用户的操作命令序列化以后通过 <code>control_socket</code> 发送给 <code>scrcpy-server</code></p>
+<h2 id="总结">总结</h2>
+<p>从源码中可以看出, client 端主要做的事情如下:</p>
+<ul>
+<li>将 <code>scrcpy-server</code> push 到 Android 设备上;</li>
+<li>通过 <code>adb reverse</code> 或 <code>adb forward</code> 创建端口转发;</li>
+<li>通过 <code>adb shell CLASSPATH=... app_process ...</code> 命令启动 <code>scrcpy-server</code>;</li>
+<li>建立 <code>video_socket</code> 和 <code>control_socket</code> 两个 socket 与 <code>scrcpy-server</code> 通信, 前者接收视频流, 后者发送操作命令;</li>
+<li>通过 <code>video_socket</code> 读取视频帧的宽高初始化界面, 解析视频流, 将 raw 视频帧发送给前台展示; 接收用户操作指令, 序列化后通过 <code>control_socket</code> 发送给 <code>scrcpy-server</code> 处理;</li>
+<li>将视频帧保存为文件;</li>
+</ul>
+
+</div>
+
+
+    </main>
+
+    
+      
+    
+  </body>
+</html>

@@ -53,6 +53,20 @@
     <div class="posts">
 <article class="post">
   <h1 class="post-title">
+    <a href="https://balanice.github.io/post/scrcpy-client-source/">scrcpy 客户端源码阅读</a>
+  </h1>
+  <time datetime="2022-07-06T08:09:37&#43;0800" class="post-date">Wed, Jul 6, 2022</time>
+  scrcpy 是一款提供投屏和操作 Android 设备的开源软件, 无需 root. 其源码分为 client 和 server 两部分, client 位于 app/ 目录中, 由 C 实现, server 位于 server/ 目录, 由 Java 实现. 本文基于 scrcpy-1.17.
+client 程序入口位于 main.c 的 main() 函数, 调用了 scrcpy() 函数:
+int main(int argc, char *argv[]) { //... //... int res = scrcpy(&amp;args.opts) ? 0 : 1; avformat_network_deinit(); // ignore failure return res; } scrcpy() scrcpy() 函数位于 scrcpy.c, 我们定位到这里看看这个函数做了什么:
+bool scrcpy(const struct scrcpy_options *options) { if (!
+  
+  <div class="read-more-link">
+    <a href="/post/scrcpy-client-source/">Read More…</a>
+  </div>
+  
+</article><article class="post">
+  <h1 class="post-title">
     <a href="https://balanice.github.io/post/arch-tips/">ArchLinux Tips</a>
   </h1>
   <time datetime="2022-07-02T08:12:37&#43;0800" class="post-date">Sat, Jul 2, 2022</time>

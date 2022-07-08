@@ -2,13 +2,25 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://balanice.github.io/post/arch-tips/</loc>
-    <lastmod>2022-07-02T08:12:37+08:00</lastmod>
+    <loc>https://balanice.github.io/tags/android/</loc>
+    <lastmod>2022-07-06T08:09:37+08:00</lastmod>
   </url><url>
     <loc>https://balanice.github.io/</loc>
-    <lastmod>2022-07-02T08:12:37+08:00</lastmod>
+    <lastmod>2022-07-06T08:09:37+08:00</lastmod>
+  </url><url>
+    <loc>https://balanice.github.io/tags/c/</loc>
+    <lastmod>2022-07-06T08:09:37+08:00</lastmod>
   </url><url>
     <loc>https://balanice.github.io/post/</loc>
+    <lastmod>2022-07-06T08:09:37+08:00</lastmod>
+  </url><url>
+    <loc>https://balanice.github.io/post/scrcpy-client-source/</loc>
+    <lastmod>2022-07-06T08:09:37+08:00</lastmod>
+  </url><url>
+    <loc>https://balanice.github.io/tags/</loc>
+    <lastmod>2022-07-06T08:09:37+08:00</lastmod>
+  </url><url>
+    <loc>https://balanice.github.io/post/arch-tips/</loc>
     <lastmod>2022-07-02T08:12:37+08:00</lastmod>
   </url><url>
     <loc>https://balanice.github.io/post/git-tips/</loc>
@@ -23,9 +35,6 @@
     <loc>https://balanice.github.io/categories/other/</loc>
     <lastmod>2022-04-30T19:08:19+08:00</lastmod>
   </url><url>
-    <loc>https://balanice.github.io/tags/</loc>
-    <lastmod>2022-04-30T19:08:19+08:00</lastmod>
-  </url><url>
     <loc>https://balanice.github.io/post/cook/</loc>
     <lastmod>2022-04-30T19:08:19+08:00</lastmod>
   </url><url>
@@ -34,9 +43,6 @@
   </url><url>
     <loc>https://balanice.github.io/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/</loc>
     <lastmod>2022-04-30T19:08:19+08:00</lastmod>
-  </url><url>
-    <loc>https://balanice.github.io/tags/android/</loc>
-    <lastmod>2022-02-18T08:12:37+08:00</lastmod>
   </url><url>
     <loc>https://balanice.github.io/categories/android/</loc>
     <lastmod>2022-02-18T08:12:37+08:00</lastmod>
