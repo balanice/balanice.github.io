@@ -3,8 +3,6 @@ title: "Android Tips"
 date: 2021-01-11T08:12:37+08:00
 draft: true
 tags: Android
-categories:
-    - Android
 ---
 
 ## Android 部分小技巧

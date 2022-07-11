@@ -2,8 +2,6 @@
 title: "slf4j + logback 记录日志"
 date: 2021-01-24T08:12:37+08:00
 draft: true
-categories:
-    - Java
 tags: [Java, Springboot]
 ---
 

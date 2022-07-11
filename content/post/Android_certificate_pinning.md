@@ -4,8 +4,6 @@ date: 2022-02-18
 date: 2022-02-18T08:12:37+08:00
 draft: true
 tags: Android
-categories:
-    - Android
 ---
 
 ## 如何配置固定证书

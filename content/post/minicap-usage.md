@@ -3,9 +3,6 @@ title: "minicap 使用"
 date: 2021-02-21T08:12:37+08:00
 draft: true
 tags: [Android, Java]
-categories:
-    - Android
-    - Java
 ---
 
 ## minicap 是什么

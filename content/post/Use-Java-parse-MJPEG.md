@@ -3,8 +3,6 @@ title: "使用 Java 解析 MJPEG 为 JPG 数组"
 date: 2021-01-19T08:12:37+08:00
 draft: true
 tags: [Java, MJPEG]
-categories: 
-    - Java
 ---
 
 ## MJPEG 是什么

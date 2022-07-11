@@ -3,8 +3,6 @@ title: "adb tips"
 date: 2021-01-10T08:12:37+08:00
 draft: true
 tags: Android
-categories: 
-    - Android
 ---
 
 参考资料: [命令行工具](https://developer.android.google.cn/studio/command-line/)

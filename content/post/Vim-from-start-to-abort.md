@@ -3,8 +3,6 @@ title: "Vim 从入门到放弃"
 date: 2021-01-17T08:12:37+08:00
 draft: true
 tags: Linux
-categories: 
-    - Linux
 ---
 
 ## Vim 是什么

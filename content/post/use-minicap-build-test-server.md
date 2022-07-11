@@ -3,9 +3,6 @@ title: "使用 minicap 搭建远程操作网站"
 date: 2021-03-27T08:12:37+08:00
 draft: true
 tags: [Android, SpringBoot]
-categories:
-    - Android
-    - SpringBoot
 ---
 
 ## 技术选型
