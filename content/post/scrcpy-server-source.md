@@ -139,6 +139,22 @@ private void handleEvent() throws IOException {
 
 这个方法通过 `controlSocket` 接收主机发送过来的指令, 执行相应的操作控制 Android 设备
 
+* 触摸与滚动操作是如何实现的?
+
+查看代码, `controller.injectTouch() -> device.injectEvent() -> SERVICE_MANAGER.getInputManager().injectInputEvent(inputEvent, mode)`, 从如下代码可以看出, 最终是通过反射调用 `InputManager` 的 `injectInputEvent` 实现手机的触摸和滚动等操作
+
+```Java
+public boolean injectInputEvent(InputEvent inputEvent, int mode) {
+    try {
+        Method method = getInjectInputEventMethod();
+        return (boolean) method.invoke(manager, inputEvent, mode);
+    } catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
+        Ln.e("Could not invoke method", e);
+        return false;
+    }
+}
+```
+
 ### startDeviceMessageSender(controller.getSender())
 
 这个方法调用了 `DeviceMessageSender.loop()` -> `DesktopConnection.sendDeviceMessage()`
@@ -234,3 +250,8 @@ private boolean encode(MediaCodec codec, FileDescriptor fd) throws IOException {
 ## 总结
 
 server 的流程是先创建通信的 socket, 创建子线程处理主机发来的指令, 获取屏幕数据, 编码后发送给主机
+
+## 问题
+
+* MediaCodec 是什么?
+* 如何通过 DisplayManager 得到屏幕内容?
