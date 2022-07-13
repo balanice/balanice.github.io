@@ -53,6 +53,19 @@
     <div class="posts">
 <article class="post">
   <h1 class="post-title">
+    <a href="https://balanice.github.io/post/scrcpy-server-source/">Scrcpy Server 源码阅读</a>
+  </h1>
+  <time datetime="2022-07-11T13:02:46&#43;0800" class="post-date">Mon, Jul 11, 2022</time>
+  之前的文章查看了 scrcpy client 端代码, 这里查看 server 端代码, 同样基于 scrcpy-1.17.
+程序入口 server 位于 sercver/ 目录, 程序入口为 Server.java 的 main() 方法, 在这里调用了 scrcpy() 方法, 看看 scrcpy() 方法做了什么:
+private static void scrcpy(Options options) throws IOException { // ... // ... // 是否为 adb forward boolean tunnelForward = options.isTunnelForward(); // 创建与主机通信的 server 或 socket, 拿到 videoSocket 和 controlSocket try (DesktopConnection connection = DesktopConnection.open(device, tunnelForward)) { // 编码器, 内部由 MediaCodec 实现 ScreenEncoder screenEncoder = new ScreenEncoder(options.
+  
+  <div class="read-more-link">
+    <a href="/post/scrcpy-server-source/">Read More…</a>
+  </div>
+  
+</article><article class="post">
+  <h1 class="post-title">
     <a href="https://balanice.github.io/post/scrcpy-client-source/">scrcpy 客户端源码阅读</a>
   </h1>
   <time datetime="2022-07-06T08:09:37&#43;0800" class="post-date">Wed, Jul 6, 2022</time>

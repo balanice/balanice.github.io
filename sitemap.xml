@@ -2,16 +2,19 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
+    <loc>https://balanice.github.io/</loc>
+    <lastmod>2022-07-11T13:02:46+08:00</lastmod>
+  </url><url>
+    <loc>https://balanice.github.io/post/</loc>
+    <lastmod>2022-07-11T13:02:46+08:00</lastmod>
+  </url><url>
+    <loc>https://balanice.github.io/post/scrcpy-server-source/</loc>
+    <lastmod>2022-07-11T13:02:46+08:00</lastmod>
+  </url><url>
     <loc>https://balanice.github.io/tags/android/</loc>
     <lastmod>2022-07-06T08:09:37+08:00</lastmod>
   </url><url>
-    <loc>https://balanice.github.io/</loc>
-    <lastmod>2022-07-06T08:09:37+08:00</lastmod>
-  </url><url>
     <loc>https://balanice.github.io/tags/c/</loc>
-    <lastmod>2022-07-06T08:09:37+08:00</lastmod>
-  </url><url>
-    <loc>https://balanice.github.io/post/</loc>
     <lastmod>2022-07-06T08:09:37+08:00</lastmod>
   </url><url>
     <loc>https://balanice.github.io/post/scrcpy-client-source/</loc>
@@ -32,28 +35,16 @@
     <loc>https://balanice.github.io/tags/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/</loc>
     <lastmod>2022-04-30T19:08:19+08:00</lastmod>
   </url><url>
-    <loc>https://balanice.github.io/categories/android/</loc>
-    <lastmod>2022-02-18T08:12:37+08:00</lastmod>
-  </url><url>
     <loc>https://balanice.github.io/post/android_certificate_pinning/</loc>
     <lastmod>2022-02-18T08:12:37+08:00</lastmod>
   </url><url>
-    <loc>https://balanice.github.io/categories/</loc>
-    <lastmod>2022-02-18T08:12:37+08:00</lastmod>
-  </url><url>
     <loc>https://balanice.github.io/tags/springboot/</loc>
-    <lastmod>2021-03-27T08:12:37+08:00</lastmod>
-  </url><url>
-    <loc>https://balanice.github.io/categories/springboot/</loc>
     <lastmod>2021-03-27T08:12:37+08:00</lastmod>
   </url><url>
     <loc>https://balanice.github.io/post/use-minicap-build-test-server/</loc>
     <lastmod>2021-03-27T08:12:37+08:00</lastmod>
   </url><url>
     <loc>https://balanice.github.io/tags/java/</loc>
-    <lastmod>2021-02-21T08:12:37+08:00</lastmod>
-  </url><url>
-    <loc>https://balanice.github.io/categories/java/</loc>
     <lastmod>2021-02-21T08:12:37+08:00</lastmod>
   </url><url>
     <loc>https://balanice.github.io/post/minicap-usage/</loc>
@@ -71,9 +62,6 @@
     <loc>https://balanice.github.io/tags/linux/</loc>
     <lastmod>2021-01-17T08:12:37+08:00</lastmod>
   </url><url>
-    <loc>https://balanice.github.io/categories/linux/</loc>
-    <lastmod>2021-01-17T08:12:37+08:00</lastmod>
-  </url><url>
     <loc>https://balanice.github.io/post/vim-from-start-to-abort/</loc>
     <lastmod>2021-01-17T08:12:37+08:00</lastmod>
   </url><url>
@@ -85,5 +73,7 @@
   </url><url>
     <loc>https://balanice.github.io/readme/</loc>
     <lastmod>2016-04-23T08:53:21+08:00</lastmod>
+  </url><url>
+    <loc>https://balanice.github.io/categories/</loc>
   </url>
 </urlset>

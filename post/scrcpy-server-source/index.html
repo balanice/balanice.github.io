@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-us" lang="en-us">
+<head>
+  <link href="https://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.101.0" />
+
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Scrcpy Server 源码阅读 &middot; Balanice&#39;s Blog</title>
+  <meta name="description" content="" />
+
+  
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/print.css" media="print">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/poole.css">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/syntax.css">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/hyde.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Abril+Fatface|PT+Sans:400,400i,700">
+
+
+  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+
+  
+  
+</head>
+
+  <body class=" ">
+  <aside class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <a href="https://balanice.github.io/"><h1>Balanice&#39;s Blog</h1></a>
+      <p class="lead">
+       资深 Ctrl C &#43; Ctrl V 程序员 
+      </p>
+    </div>
+
+    <nav>
+      <ul class="sidebar-nav">
+        <li><a href="https://balanice.github.io/">Home</a> </li>
+        <li><a href="https://github.com/balanice/"> balanice </a></li>
+      </ul>
+    </nav>
+
+    <p>tokuu@outlook.com</p>
+  </div>
+</aside>
+
+    <main class="content container">
+    <div class="post">
+  <h1>Scrcpy Server 源码阅读</h1>
+  <time datetime=2022-07-11T13:02:46&#43;0800 class="post-date">Mon, Jul 11, 2022</time>
+  <p>之前的文章查看了 scrcpy client 端代码, 这里查看 server 端代码, 同样基于 <code>scrcpy-1.17</code>.</p>
+<h2 id="程序入口">程序入口</h2>
+<p>server 位于 <code>sercver/</code> 目录, 程序入口为 <code>Server.java</code> 的 <code>main()</code> 方法, 在这里调用了 <code>scrcpy()</code> 方法, 看看 <code>scrcpy()</code> 方法做了什么:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Java" data-lang="Java"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">scrcpy</span><span style="color:#f92672">(</span>Options options<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> IOException <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 是否为 adb forward
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">boolean</span> tunnelForward <span style="color:#f92672">=</span> options<span style="color:#f92672">.</span><span style="color:#a6e22e">isTunnelForward</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 创建与主机通信的 server 或 socket, 拿到 videoSocket 和 controlSocket
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">try</span> <span style="color:#f92672">(</span>DesktopConnection connection <span style="color:#f92672">=</span> DesktopConnection<span style="color:#f92672">.</span><span style="color:#a6e22e">open</span><span style="color:#f92672">(</span>device<span style="color:#f92672">,</span> tunnelForward<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 编码器, 内部由 MediaCodec 实现
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        ScreenEncoder screenEncoder <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ScreenEncoder<span style="color:#f92672">(</span>options<span style="color:#f92672">.</span><span style="color:#a6e22e">getSendFrameMeta</span><span style="color:#f92672">(),</span> options<span style="color:#f92672">.</span><span style="color:#a6e22e">getBitRate</span><span style="color:#f92672">(),</span> options<span style="color:#f92672">.</span><span style="color:#a6e22e">getMaxFps</span><span style="color:#f92672">(),</span> codecOptions<span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>                options<span style="color:#f92672">.</span><span style="color:#a6e22e">getEncoderName</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        Thread controllerThread <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        Thread deviceMessageSenderThread <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>options<span style="color:#f92672">.</span><span style="color:#a6e22e">getControl</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">final</span> Controller controller <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Controller<span style="color:#f92672">(</span>device<span style="color:#f92672">,</span> connection<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// asynchronous
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// 创建一个线程, 调用 controller.control()
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            controllerThread <span style="color:#f92672">=</span> startController<span style="color:#f92672">(</span>controller<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 创建线程, 调用 sender
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            deviceMessageSenderThread <span style="color:#f92672">=</span> startDeviceMessageSender<span style="color:#f92672">(</span>controller<span style="color:#f92672">.</span><span style="color:#a6e22e">getSender</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            device<span style="color:#f92672">.</span><span style="color:#a6e22e">setClipboardListener</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> Device<span style="color:#f92672">.</span><span style="color:#a6e22e">ClipboardListener</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">onClipboardTextChanged</span><span style="color:#f92672">(</span>String text<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                    controller<span style="color:#f92672">.</span><span style="color:#a6e22e">getSender</span><span style="color:#f92672">().</span><span style="color:#a6e22e">pushClipboardText</span><span style="color:#f92672">(</span>text<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">});</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// synchronous
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// 向主机发送视频流
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            screenEncoder<span style="color:#f92672">.</span><span style="color:#a6e22e">streamScreen</span><span style="color:#f92672">(</span>device<span style="color:#f92672">,</span> connection<span style="color:#f92672">.</span><span style="color:#a6e22e">getVideoFd</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>IOException e<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// this is expected on close
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            Ln<span style="color:#f92672">.</span><span style="color:#a6e22e">d</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Screen streaming stopped&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span> <span style="color:#66d9ef">finally</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>controllerThread <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                controllerThread<span style="color:#f92672">.</span><span style="color:#a6e22e">interrupt</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>deviceMessageSenderThread <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                deviceMessageSenderThread<span style="color:#f92672">.</span><span style="color:#a6e22e">interrupt</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h3 id="desktopconnectionopendevice-tunnelforward-创建连接">DesktopConnection.open(device, tunnelForward) 创建连接</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Java" data-lang="Java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> DesktopConnection <span style="color:#a6e22e">open</span><span style="color:#f92672">(</span>Device device<span style="color:#f92672">,</span> <span style="color:#66d9ef">boolean</span> tunnelForward<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> IOException <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    LocalSocket videoSocket<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    LocalSocket controlSocket<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>tunnelForward<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>    <span style="color:#75715e">// adb forward
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        LocalServerSocket localServerSocket <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> LocalServerSocket<span style="color:#f92672">(</span>SOCKET_NAME<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            videoSocket <span style="color:#f92672">=</span> localServerSocket<span style="color:#f92672">.</span><span style="color:#a6e22e">accept</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// send one byte so the client may read() to detect a connection error
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            videoSocket<span style="color:#f92672">.</span><span style="color:#a6e22e">getOutputStream</span><span style="color:#f92672">().</span><span style="color:#a6e22e">write</span><span style="color:#f92672">(</span>0<span style="color:#f92672">);</span> <span style="color:#75715e">// 发送 1 byte 用来验证连接有效性的数据
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                controlSocket <span style="color:#f92672">=</span> localServerSocket<span style="color:#f92672">.</span><span style="color:#a6e22e">accept</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>IOException <span style="color:#f92672">|</span> RuntimeException e<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                videoSocket<span style="color:#f92672">.</span><span style="color:#a6e22e">close</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">throw</span> e<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span> <span style="color:#66d9ef">finally</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            localServerSocket<span style="color:#f92672">.</span><span style="color:#a6e22e">close</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>    <span style="color:#75715e">// adb reverse
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        videoSocket <span style="color:#f92672">=</span> connect<span style="color:#f92672">(</span>SOCKET_NAME<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            controlSocket <span style="color:#f92672">=</span> connect<span style="color:#f92672">(</span>SOCKET_NAME<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>IOException <span style="color:#f92672">|</span> RuntimeException e<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            videoSocket<span style="color:#f92672">.</span><span style="color:#a6e22e">close</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> e<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 获取视频帧尺寸并发送
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    DesktopConnection connection <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> DesktopConnection<span style="color:#f92672">(</span>videoSocket<span style="color:#f92672">,</span> controlSocket<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    Size videoSize <span style="color:#f92672">=</span> device<span style="color:#f92672">.</span><span style="color:#a6e22e">getScreenInfo</span><span style="color:#f92672">().</span><span style="color:#a6e22e">getVideoSize</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>    connection<span style="color:#f92672">.</span><span style="color:#a6e22e">send</span><span style="color:#f92672">(</span>Device<span style="color:#f92672">.</span><span style="color:#a6e22e">getDeviceName</span><span style="color:#f92672">(),</span> videoSize<span style="color:#f92672">.</span><span style="color:#a6e22e">getWidth</span><span style="color:#f92672">(),</span> videoSize<span style="color:#f92672">.</span><span style="color:#a6e22e">getHeight</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> connection<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>这个方法根据启动时候是 <code>adb forward</code> 或 <code>adb reverse</code> 创建 ServerSocket 或者 Socket 来获取与主机通信的 <code>videoSocket</code> 和 <code>controlSocket</code>, 并发送视频帧的宽高数据</p>
+<h3 id="startcontroller-启动-controller">startController() 启动 Controller</h3>
+<p>startController() 方法启动一个线程, 调用了 <code>controller.control()</code>, 最终调用了 <code>controller.handleEvent()</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Java" data-lang="Java"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">handleEvent</span><span style="color:#f92672">()</span> <span style="color:#66d9ef">throws</span> IOException <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    ControlMessage msg <span style="color:#f92672">=</span> connection<span style="color:#f92672">.</span><span style="color:#a6e22e">receiveControlMessage</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">switch</span> <span style="color:#f92672">(</span>msg<span style="color:#f92672">.</span><span style="color:#a6e22e">getType</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">case</span> ControlMessage<span style="color:#f92672">.</span><span style="color:#a6e22e">TYPE_INJECT_KEYCODE</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>device<span style="color:#f92672">.</span><span style="color:#a6e22e">supportsInputEvents</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                injectKeycode<span style="color:#f92672">(</span>msg<span style="color:#f92672">.</span><span style="color:#a6e22e">getAction</span><span style="color:#f92672">(),</span> msg<span style="color:#f92672">.</span><span style="color:#a6e22e">getKeycode</span><span style="color:#f92672">(),</span> msg<span style="color:#f92672">.</span><span style="color:#a6e22e">getRepeat</span><span style="color:#f92672">(),</span> msg<span style="color:#f92672">.</span><span style="color:#a6e22e">getMetaState</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">break</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">case</span> ControlMessage<span style="color:#f92672">.</span><span style="color:#a6e22e">TYPE_INJECT_TEXT</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>device<span style="color:#f92672">.</span><span style="color:#a6e22e">supportsInputEvents</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                injectText<span style="color:#f92672">(</span>msg<span style="color:#f92672">.</span><span style="color:#a6e22e">getText</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">break</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">case</span> ControlMessage<span style="color:#f92672">.</span><span style="color:#a6e22e">TYPE_INJECT_TOUCH_EVENT</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>device<span style="color:#f92672">.</span><span style="color:#a6e22e">supportsInputEvents</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                injectTouch<span style="color:#f92672">(</span>msg<span style="color:#f92672">.</span><span style="color:#a6e22e">getAction</span><span style="color:#f92672">(),</span> msg<span style="color:#f92672">.</span><span style="color:#a6e22e">getPointerId</span><span style="color:#f92672">(),</span> msg<span style="color:#f92672">.</span><span style="color:#a6e22e">getPosition</span><span style="color:#f92672">(),</span> msg<span style="color:#f92672">.</span><span style="color:#a6e22e">getPressure</span><span style="color:#f92672">(),</span> msg<span style="color:#f92672">.</span><span style="color:#a6e22e">getButtons</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">break</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>        default:
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// do nothing
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>这个方法通过 <code>controlSocket</code> 接收主机发送过来的指令, 执行相应的操作控制 Android 设备</p>
+<ul>
+<li>触摸与滚动操作是如何实现的?</li>
+</ul>
+<p>查看代码, <code>controller.injectTouch() -&gt; device.injectEvent() -&gt; SERVICE_MANAGER.getInputManager().injectInputEvent(inputEvent, mode)</code>, 从如下代码可以看出, 最终是通过反射调用 <code>InputManager</code> 的 <code>injectInputEvent</code> 实现手机的触摸和滚动等操作</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Java" data-lang="Java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">injectInputEvent</span><span style="color:#f92672">(</span>InputEvent inputEvent<span style="color:#f92672">,</span> <span style="color:#66d9ef">int</span> mode<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        Method method <span style="color:#f92672">=</span> getInjectInputEventMethod<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">boolean</span><span style="color:#f92672">)</span> method<span style="color:#f92672">.</span><span style="color:#a6e22e">invoke</span><span style="color:#f92672">(</span>manager<span style="color:#f92672">,</span> inputEvent<span style="color:#f92672">,</span> mode<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>InvocationTargetException <span style="color:#f92672">|</span> IllegalAccessException <span style="color:#f92672">|</span> NoSuchMethodException e<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        Ln<span style="color:#f92672">.</span><span style="color:#a6e22e">e</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Could not invoke method&#34;</span><span style="color:#f92672">,</span> e<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h3 id="startdevicemessagesendercontrollergetsender">startDeviceMessageSender(controller.getSender())</h3>
+<p>这个方法调用了 <code>DeviceMessageSender.loop()</code> -&gt; <code>DesktopConnection.sendDeviceMessage()</code></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Java" data-lang="Java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">sendDeviceMessage</span><span style="color:#f92672">(</span>DeviceMessage msg<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> IOException <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    writer<span style="color:#f92672">.</span><span style="color:#a6e22e">writeTo</span><span style="color:#f92672">(</span>msg<span style="color:#f92672">,</span> controlOutputStream<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>通过 <code>controlSocket</code> 将 Android 设备剪切板内容发送给主机</p>
+<h3 id="screenencoderstreamscreendevice-connectiongetvideofd">screenEncoder.streamScreen(device, connection.getVideoFd())</h3>
+<p>streamScreen 调用了 internalStreamScreen():</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Java" data-lang="Java"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">internalStreamScreen</span><span style="color:#f92672">(</span>Device device<span style="color:#f92672">,</span> FileDescriptor fd<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> IOException <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    MediaFormat format <span style="color:#f92672">=</span> createFormat<span style="color:#f92672">(</span>bitRate<span style="color:#f92672">,</span> maxFps<span style="color:#f92672">,</span> codecOptions<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    device<span style="color:#f92672">.</span><span style="color:#a6e22e">setRotationListener</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">boolean</span> alive<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">do</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            MediaCodec codec <span style="color:#f92672">=</span> createCodec<span style="color:#f92672">(</span>encoderName<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>            IBinder display <span style="color:#f92672">=</span> createDisplay<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            ScreenInfo screenInfo <span style="color:#f92672">=</span> device<span style="color:#f92672">.</span><span style="color:#a6e22e">getScreenInfo</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            Rect contentRect <span style="color:#f92672">=</span> screenInfo<span style="color:#f92672">.</span><span style="color:#a6e22e">getContentRect</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// include the locked video orientation
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            Rect videoRect <span style="color:#f92672">=</span> screenInfo<span style="color:#f92672">.</span><span style="color:#a6e22e">getVideoSize</span><span style="color:#f92672">().</span><span style="color:#a6e22e">toRect</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// does not include the locked video orientation
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            Rect unlockedVideoRect <span style="color:#f92672">=</span> screenInfo<span style="color:#f92672">.</span><span style="color:#a6e22e">getUnlockedVideoSize</span><span style="color:#f92672">().</span><span style="color:#a6e22e">toRect</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">int</span> videoRotation <span style="color:#f92672">=</span> screenInfo<span style="color:#f92672">.</span><span style="color:#a6e22e">getVideoRotation</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">int</span> layerStack <span style="color:#f92672">=</span> device<span style="color:#f92672">.</span><span style="color:#a6e22e">getLayerStack</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            setSize<span style="color:#f92672">(</span>format<span style="color:#f92672">,</span> videoRect<span style="color:#f92672">.</span><span style="color:#a6e22e">width</span><span style="color:#f92672">(),</span> videoRect<span style="color:#f92672">.</span><span style="color:#a6e22e">height</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>            configure<span style="color:#f92672">(</span>codec<span style="color:#f92672">,</span> format<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>            Surface surface <span style="color:#f92672">=</span> codec<span style="color:#f92672">.</span><span style="color:#a6e22e">createInputSurface</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            setDisplaySurface<span style="color:#f92672">(</span>display<span style="color:#f92672">,</span> surface<span style="color:#f92672">,</span> videoRotation<span style="color:#f92672">,</span> contentRect<span style="color:#f92672">,</span> unlockedVideoRect<span style="color:#f92672">,</span> layerStack<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>            codec<span style="color:#f92672">.</span><span style="color:#a6e22e">start</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                alive <span style="color:#f92672">=</span> encode<span style="color:#f92672">(</span>codec<span style="color:#f92672">,</span> fd<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// do not call stop() on exception, it would trigger an IllegalStateException
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                codec<span style="color:#f92672">.</span><span style="color:#a6e22e">stop</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span> <span style="color:#66d9ef">finally</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                destroyDisplay<span style="color:#f92672">(</span>display<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                codec<span style="color:#f92672">.</span><span style="color:#a6e22e">release</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>                surface<span style="color:#f92672">.</span><span style="color:#a6e22e">release</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span> <span style="color:#66d9ef">while</span> <span style="color:#f92672">(</span>alive<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span> <span style="color:#66d9ef">finally</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        device<span style="color:#f92672">.</span><span style="color:#a6e22e">setRotationListener</span><span style="color:#f92672">(</span><span style="color:#66d9ef">null</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>这个方法将屏幕数据编码, 然后通过 encode() 方法写入 <code>videoSocket</code>, 发送到主机:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Java" data-lang="Java"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">encode</span><span style="color:#f92672">(</span>MediaCodec codec<span style="color:#f92672">,</span> FileDescriptor fd<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> IOException <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">boolean</span> eof <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    MediaCodec<span style="color:#f92672">.</span><span style="color:#a6e22e">BufferInfo</span> bufferInfo <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> MediaCodec<span style="color:#f92672">.</span><span style="color:#a6e22e">BufferInfo</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">while</span> <span style="color:#f92672">(!</span>consumeRotationChange<span style="color:#f92672">()</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#f92672">!</span>eof<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">int</span> outputBufferId <span style="color:#f92672">=</span> codec<span style="color:#f92672">.</span><span style="color:#a6e22e">dequeueOutputBuffer</span><span style="color:#f92672">(</span>bufferInfo<span style="color:#f92672">,</span> <span style="color:#f92672">-</span>1<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        eof <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>bufferInfo<span style="color:#f92672">.</span><span style="color:#a6e22e">flags</span> <span style="color:#f92672">&amp;</span> MediaCodec<span style="color:#f92672">.</span><span style="color:#a6e22e">BUFFER_FLAG_END_OF_STREAM</span><span style="color:#f92672">)</span> <span style="color:#f92672">!=</span> 0<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>consumeRotationChange<span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// must restart encoding with new size
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#66d9ef">break</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>outputBufferId <span style="color:#f92672">&gt;=</span> 0<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                ByteBuffer codecBuffer <span style="color:#f92672">=</span> codec<span style="color:#f92672">.</span><span style="color:#a6e22e">getOutputBuffer</span><span style="color:#f92672">(</span>outputBufferId<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 发送帧数据的头文件
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>sendFrameMeta<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                    writeFrameMeta<span style="color:#f92672">(</span>fd<span style="color:#f92672">,</span> bufferInfo<span style="color:#f92672">,</span> codecBuffer<span style="color:#f92672">.</span><span style="color:#a6e22e">remaining</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 发送视频帧
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                IO<span style="color:#f92672">.</span><span style="color:#a6e22e">writeFully</span><span style="color:#f92672">(</span>fd<span style="color:#f92672">,</span> codecBuffer<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span> <span style="color:#66d9ef">finally</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>outputBufferId <span style="color:#f92672">&gt;=</span> 0<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                codec<span style="color:#f92672">.</span><span style="color:#a6e22e">releaseOutputBuffer</span><span style="color:#f92672">(</span>outputBufferId<span style="color:#f92672">,</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#f92672">!</span>eof<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h2 id="总结">总结</h2>
+<p>server 的流程是先创建通信的 socket, 创建子线程处理主机发来的指令, 获取屏幕数据, 编码后发送给主机</p>
+<h2 id="问题">问题</h2>
+<ul>
+<li>MediaCodec 是什么?</li>
+<li>如何通过 DisplayManager 得到屏幕内容?</li>
+</ul>
+
+</div>
+
+
+    </main>
+
+    
+      
+    
+  </body>
+</html>

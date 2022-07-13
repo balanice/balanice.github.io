@@ -5,43 +5,6 @@
     <link>https://balanice.github.io/categories/</link>
     <description>Recent content in Categories on Balanice&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    <lastBuildDate>Fri, 18 Feb 2022 08:12:37 +0800</lastBuildDate><atom:link href="https://balanice.github.io/categories/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>Android</title>
-      <link>https://balanice.github.io/categories/android/</link>
-      <pubDate>Fri, 18 Feb 2022 08:12:37 +0800</pubDate>
-      
-      <guid>https://balanice.github.io/categories/android/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>SpringBoot</title>
-      <link>https://balanice.github.io/categories/springboot/</link>
-      <pubDate>Sat, 27 Mar 2021 08:12:37 +0800</pubDate>
-      
-      <guid>https://balanice.github.io/categories/springboot/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Java</title>
-      <link>https://balanice.github.io/categories/java/</link>
-      <pubDate>Sun, 21 Feb 2021 08:12:37 +0800</pubDate>
-      
-      <guid>https://balanice.github.io/categories/java/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Linux</title>
-      <link>https://balanice.github.io/categories/linux/</link>
-      <pubDate>Sun, 17 Jan 2021 08:12:37 +0800</pubDate>
-      
-      <guid>https://balanice.github.io/categories/linux/</guid>
-      <description></description>
-    </item>
-    
+    <language>en-us</language><atom:link href="https://balanice.github.io/categories/index.xml" rel="self" type="application/rss+xml" />
   </channel>
 </rss>
