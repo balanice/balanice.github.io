@@ -6,7 +6,18 @@
     <description>Recent content in Springboot on Balanice&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 27 Mar 2021 08:12:37 +0800</lastBuildDate><atom:link href="https://balanice.github.io/tags/springboot/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Wed, 13 Jul 2022 10:24:51 +0800</lastBuildDate><atom:link href="https://balanice.github.io/tags/springboot/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Vscode Tips</title>
+      <link></link>
+      <pubDate>Wed, 13 Jul 2022 10:24:51 +0800</pubDate>
+      
+      <guid></guid>
+      <description>记录 vscode 使用过程中遇到的一些问题及解决方案
+设置 maven 的镜像地址 找到 maven 安装路径下的 settings.xml, 比如我的环境是: /opt/maven/conf/settings.xml; 找一个镜像源贴到 mirrors 节点里面, 比如我使用的是华为镜像: &amp;lt;mirrors&amp;gt; ... &amp;lt;mirror&amp;gt; &amp;lt;id&amp;gt;huaweicloud&amp;lt;/id&amp;gt; &amp;lt;mirrorOf&amp;gt;*&amp;lt;/mirrorOf&amp;gt; &amp;lt;url&amp;gt;https://repo.huaweicloud.com/repository/maven/&amp;lt;/url&amp;gt; &amp;lt;/mirror&amp;gt; ... &amp;lt;/mirrors&amp;gt; 将路径 /opt/maven/conf/settings.xml 填入 Settings -&amp;gt; Extensions -&amp;gt; Java -&amp;gt; Configuration -&amp;gt; Maven:User Settings 中; The Language Support for Java server crashed &amp;hellip; 问题 环境: ArchLinux 版本: 1.69.0 Java: OpenJDK-18.0.1.1 Maven: 3.8.6 解决方法: 取消勾选 Settings -&amp;gt; Java -&amp;gt; Jdt -&amp;gt; Ls -&amp;gt; Lombok Support: Enabled
+参考方案</description>
+    </item>
+    
     <item>
       <title>使用 minicap 搭建远程操作网站</title>
       <link>https://balanice.github.io/post/use-minicap-build-test-server/</link>

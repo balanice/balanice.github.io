@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on Balanice&#39;s Blog</title>
+    <link>https://balanice.github.io/posts/</link>
+    <description>Recent content in Posts on Balanice&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 14 Jul 2022 22:11:12 +0800</lastBuildDate><atom:link href="https://balanice.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Notification 的使用</title>
+      <link>https://balanice.github.io/posts/notification/</link>
+      <pubDate>Fri, 26 Jan 2018 08:55:17 +0800</pubDate>
+      
+      <guid>https://balanice.github.io/posts/notification/</guid>
+      <description>Android 8.0 新特性 Android 8.0重新设计了通知，以便为管理通知行为和设置提供更轻松和更统一的方式。这些变更包括：
+通知渠道 Android 8.0 引入了通知渠道特性，将应用的通知进行分门别类，用户可以针对不同的通知类别单独设置通知优先级别和提醒方式。用户界面将通知渠道称之为通知类别。
+1.创建通知渠道 NotificationChannel channel = new NotificationChannel(channelId， name， importance); channel.setShowBadge(canShowBadge); channel.enableVibration(vibration); channel.setSound(sound， null); channel.enableLights(lights); channel.setBypassDnd(dnd); channel.setLockscreenVisibility(lockScreen); getNotificationManager(context).createNotificationChannel(channel); 从方法上可以看出，渠道将之前由Notification.Builder设置的部分方法转移到NotificationChannel中了.
+2.读取通知渠道 用户可以设置通知渠道的行为，包括震动和声音。可以通过如下方法来读取用户对通知渠道的设置:
+通过getNotificationChannel()获取单个通知渠道; 通过getNotificationChannels()方法获取应用所有的通知渠道。 通过上面的方法获取到NotificationChannel之后，可以通过getVibrationPattern()，getSound()等方法获取到用户当前的设置。要查看当前通知渠道是否被禁用，可以通过getImportance()方法，如果被禁用，这个方法会返回IMPORTANCE_NONE。 3. 更新通知渠道 通知渠道创建之后，用户将负责其设置和行为。此时，可以通过调用createNotificationChannel()方法，然后再次将通知渠道提交到通知管理器来对已存在的通知渠道更名，或者更新它的内容。 通过下面的代码，你可以通过以创建新的Activity的方式跳转到通知渠道的设置界面。该方法需要这个渠道的ID和应用的包名
+Intent intent = new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS); intent.putExtra(Settings.EXTRA_CHANNEL_ID， mChannel.getId()); intent.putExtra(Settings.EXTRA_APP_PACKAGE， getPackageName()); startActivity(intent); 4. 删除通知渠道 可以通过调用deleteNotificationChannel()方法来删除通知渠道:
+NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE); // The id of the channel. String id = &amp;#34;my_channel_01&amp;#34;; mNotificationManager.deleteNotificationChannel(id); 注意: 作为一种垃圾邮件预防机制，通知设置界面会显示被删除的渠道数量。
+通知标志 Android 8.0 开始，应用可以在启动器图标上显示通知圆点来提示用户，但这个圆点角标和 iOS 上那个有所不同——它仅提示用户该应用有通知，不会显示具体的通知数量。 通知标志显示用户未操作或者关闭的,与一个或者多个通知渠道管理的通知.</description>
+    </item>
+    
+  </channel>
+</rss>
