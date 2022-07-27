@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-us" lang="en-us">
+<head>
+  <link href="https://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.101.0" />
+
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Content_provider &middot; Balanice&#39;s Blog</title>
+  <meta name="description" content="" />
+
+  
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/print.css" media="print">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/poole.css">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/syntax.css">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/hyde.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Abril+Fatface|PT+Sans:400,400i,700">
+
+
+  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+
+  
+  
+</head>
+
+  <body class=" ">
+  <aside class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <a href="https://balanice.github.io/"><h1>Balanice&#39;s Blog</h1></a>
+      <p class="lead">
+       资深 Ctrl C &#43; Ctrl V 程序员 
+      </p>
+    </div>
+
+    <nav>
+      <ul class="sidebar-nav">
+        <li><a href="https://balanice.github.io/">Home</a> </li>
+        <li><a href="https://github.com/balanice/"> balanice </a></li>
+      </ul>
+    </nav>
+
+    <p>tokuu@outlook.com</p>
+  </div>
+</aside>
+
+    <main class="content container">
+    <div class="post">
+  <h1>Content_provider</h1>
+  <time datetime=2018-04-19T08:18:27&#43;0800 class="post-date">Thu, Apr 19, 2018</time>
+  <p><code>ContentProvider</code> 是构建 Android 应用的重要组件之一, 它封装数据并通过简单的 <code>ContentResolver</code> 接口向应用提供数据. 仅在需要在多个应用间共享数据时候才需要实现 <code>ContentProvider</code>, 例如联系人应用.
+<img src="https://developer.android.google.cn/static/guide/topics/providers/images/content-provider-overview.png" alt="内容提供程序如何管理存储空间访问的概览图"></p>
+<p><code>ContentProvider</code> 是一种标准接口, 能提供很好的抽象, 可以在修改修改应用数据存储实现的同时不影响访问数据的其它应用. 例如, 可以将 SQLite 数据库换成其它存储空间
+<img src="https://developer.android.google.cn/static/guide/topics/providers/images/content-provider-migration.png" alt="迁移内容提供程序存储空间的图示意图"></p>
+<p><code>ContentProvider</code> 是应用程序之间共享数据的接口. 使用的时候首先自定义一个继承 <code>ContentProvider</code> 的子类, 然后覆写 <code>query</code>, <code>insert</code>, <code>update</code>, <code>delete</code> 等方法. 因为是四大组件之一, 因此必须在 <code>AndroidManifest</code> 文件中进行注册, 将自己的数据以 <code>URI</code> 的方式共享出去,  第三方应用可以通过<code>ContentResolver</code> 来访问.</p>
+<p>底层也是由 binder 实现</p>
+<h2 id="uri介绍">URI介绍</h2>
+<p>每一个 <code>ContentProvider</code> 都有一个公共的 <code>URI</code>, 只能通过访问该 <code>URI</code> 来访问数据
+Android提供的 <code>ContentProvider</code> 都存放在 <code>android.provider</code> 包中, 将其分为A, B, C, D四个部分:</p>
+<ol>
+<li>A: 标准前缀, 用来说明一个 ContentProvider 控制这些数据, 无法改变: &ldquo;content://&rdquo;</li>
+<li>B: URI 的标识, 用于唯一标示这个 ContentProvider, 外部调用者可以通过这个标识来找到它. 它定义了是哪个 ContentProvider 提供这些数据.对于第三方应用, 为了保证 URI 的唯一性, 它必须是一个完整的, 小写的类名, 这个标识在元素的 <code>authorities</code> 属性中说明: 一般是定义该 ContentProvider 的包.类名称</li>
+<li>C: 路径(path), 通俗的讲就是你要操作的数据库中表的名字, 或者你也可以自定义, 记得在使用的时候保持一致就可以了, 例如: &ldquo;content://com.bing.provider.myprovider/tablename&rdquo;</li>
+<li>D: 如果URI包含表示需要获取的记录的 id, 则就返回该 id 对应的数据, 如果没有 id, 就表示返回全部; 例如: &ldquo;content://com.bing.provider.myprovider/tablename/#&rdquo;, # 表示 id;</li>
+</ol>
+<hr>
+<p>参考: <a href="https://developer.android.google.cn/guide/topics/providers/content-providers">ContentProvider</a></p>
+
+</div>
+
+
+    </main>
+
+    
+      
+    
+  </body>
+</html>

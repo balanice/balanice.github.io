@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-us" lang="en-us">
+<head>
+  <link href="https://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.101.0" />
+
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Android 开机启动流程 &middot; Balanice&#39;s Blog</title>
+  <meta name="description" content="" />
+
+  
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/print.css" media="print">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/poole.css">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/syntax.css">
+  <link type="text/css" rel="stylesheet" href="https://balanice.github.io/css/hyde.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Abril+Fatface|PT+Sans:400,400i,700">
+
+
+  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+
+  
+  
+</head>
+
+  <body class=" ">
+  <aside class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <a href="https://balanice.github.io/"><h1>Balanice&#39;s Blog</h1></a>
+      <p class="lead">
+       资深 Ctrl C &#43; Ctrl V 程序员 
+      </p>
+    </div>
+
+    <nav>
+      <ul class="sidebar-nav">
+        <li><a href="https://balanice.github.io/">Home</a> </li>
+        <li><a href="https://github.com/balanice/"> balanice </a></li>
+      </ul>
+    </nav>
+
+    <p>tokuu@outlook.com</p>
+  </div>
+</aside>
+
+    <main class="content container">
+    <div class="post">
+  <h1>Android 开机启动流程</h1>
+  <time datetime=2022-07-22T08:39:54&#43;0800 class="post-date">Fri, Jul 22, 2022</time>
+  <blockquote>
+<ul>
+<li>本文代码基于 Android 12</li>
+</ul>
+</blockquote>
+<p>Android 系统底层基于 Linux 内核, 其启动过程与 Linux 系统类似, 在按下电源键以后, 首先启动的是引导程序 <code>BootLoader</code>, Linux 上一般是 <code>GRUB</code>. 我们平时刷机一般都是需要先解锁 <code>BootLoader</code>, 安装第三方 Recovery, 如 <code>TWRP</code>, 然后才能刷机, 当然厂商有更便捷的刷机方式, 不过普通人一般接触不到, 此处不做讨论.</p>
+<blockquote>
+<ul>
+<li><code>BootLoader</code> 为什么要加锁? 当然是出于安全原因, 为了保护手机中的数据. 比如有人捡到一台手机, 这个手机有锁屏密码, 但是 <code>BootLoader</code> 未加锁, 那么别人就可以轻易通过刷机的方式绕过锁屏密码, 类似于给电脑重装系统.</li>
+</ul>
+</blockquote>
+<h3 id="bootloader-做了什么">BootLoader 做了什么?</h3>
+<p><code>BootLoader</code> 是在操作系统运行之前执行的一段程序, 通过这个程序来初始化硬件设备, 建立内存空间的映射表, 从而建立适当的系统软硬件环境, 为最终调用系统内核做好准备.</p>
+<h3 id="init">init</h3>
+<p>Linux 内核启动 Android 的 <code>init</code> 进程, 入口代码位于 <code>/system/core/init/main.cpp</code> 的 main() 函数:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C" data-lang="C"><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>(<span style="color:#66d9ef">int</span> argc, <span style="color:#66d9ef">char</span><span style="color:#f92672">**</span> argv) {
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">#if __has_feature(address_sanitizer)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>      __asan_set_error_report_callback(AsanReportCallback);
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">#endif
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>      <span style="color:#75715e">// Boost prio which will be restored later
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>      setpriority(PRIO_PROCESS, <span style="color:#ae81ff">0</span>, <span style="color:#f92672">-</span><span style="color:#ae81ff">20</span>);
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>strcmp(basename(argv[<span style="color:#ae81ff">0</span>]), <span style="color:#e6db74">&#34;ueventd&#34;</span>)) {
+</span></span><span style="display:flex;"><span>          <span style="color:#66d9ef">return</span> ueventd_main(argc, argv);
+</span></span><span style="display:flex;"><span>      }
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>     <span style="color:#66d9ef">if</span> (argc <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">1</span>) {
+</span></span><span style="display:flex;"><span>          <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>strcmp(argv[<span style="color:#ae81ff">1</span>], <span style="color:#e6db74">&#34;subcontext&#34;</span>)) {
+</span></span><span style="display:flex;"><span>              android<span style="color:#f92672">::</span>base<span style="color:#f92672">::</span>InitLogging(argv, <span style="color:#f92672">&amp;</span>android<span style="color:#f92672">::</span>base<span style="color:#f92672">::</span>KernelLogger);
+</span></span><span style="display:flex;"><span>              <span style="color:#66d9ef">const</span> BuiltinFunctionMap<span style="color:#f92672">&amp;</span> function_map <span style="color:#f92672">=</span> GetBuiltinFunctionMap();
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>              <span style="color:#66d9ef">return</span> SubcontextMain(argc, argv, <span style="color:#f92672">&amp;</span>function_map);
+</span></span><span style="display:flex;"><span>          }
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>          <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>strcmp(argv[<span style="color:#ae81ff">1</span>], <span style="color:#e6db74">&#34;selinux_setup&#34;</span>)) {
+</span></span><span style="display:flex;"><span>              <span style="color:#66d9ef">return</span> SetupSelinux(argv);
+</span></span><span style="display:flex;"><span>          }
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>          <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>strcmp(argv[<span style="color:#ae81ff">1</span>], <span style="color:#e6db74">&#34;second_stage&#34;</span>)) {
+</span></span><span style="display:flex;"><span>              <span style="color:#66d9ef">return</span> SecondStageMain(argc, argv);
+</span></span><span style="display:flex;"><span>          }
+</span></span><span style="display:flex;"><span>      }
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">return</span> FirstStageMain(argc, argv);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>init</code> 进程被分为三个阶段, <code>first stage init</code>, <code>SELinux setup</code>, <code>second stage init</code></p>
+<ul>
+<li><code>first stage init</code> 代码位于 <code>/system/core/init/first_stage_init.cpp</code> 的 <code>FirstStageMain()</code>. 这个阶段主要是最小化设置设备, 为加载系统剩余功能做准备. 尤其是挂载 /dev, /proc 和包含系统代码的所有分区, 并将有 ramdisk 的设备的 <code>system.img</code> 挂载到 <code>/</code>. 这个阶段执行结束后会以 <code>selinux_setup</code> 的参数执行 <code>/system/bin/init</code>;</li>
+<li><code>SELinux setup</code>  代码位于 <code>/system/core/init/selinux.cpp</code> 的 <code>SetupSelinux()</code>. 这个阶段 SELinux 会被编译加载到系统中. 这个阶段执行结束后, 会再次以 <code>second_stage</code> 参数执行 <code>/system/bin/init</code>;</li>
+<li><code>second stage init</code> 代码位于 <code>/system/core/init/init.cpp</code> 的 <code>SecondStageMain()</code>. 这个阶段会通过 <code>init.rc</code> 脚本执行主要的初始化和启动服务进程工作.</li>
+</ul>
+<h3 id="second-stage-init">second stage init</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C" data-lang="C"><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">SecondStageMain</span>(<span style="color:#66d9ef">int</span> argc, <span style="color:#66d9ef">char</span><span style="color:#f92672">**</span> argv) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    ActionManager<span style="color:#f92672">&amp;</span> am <span style="color:#f92672">=</span> ActionManager<span style="color:#f92672">::</span>GetInstance();
+</span></span><span style="display:flex;"><span>    ServiceList<span style="color:#f92672">&amp;</span> sm <span style="color:#f92672">=</span> ServiceList<span style="color:#f92672">::</span>GetInstance();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    LoadBootScripts(am, sm);
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">LoadBootScripts</span>(ActionManager<span style="color:#f92672">&amp;</span> action_manager, ServiceList<span style="color:#f92672">&amp;</span> service_list) {
+</span></span><span style="display:flex;"><span>    Parser parser <span style="color:#f92672">=</span> CreateParser(action_manager, service_list);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    std<span style="color:#f92672">::</span>string bootscript <span style="color:#f92672">=</span> GetProperty(<span style="color:#e6db74">&#34;ro.boot.init_rc&#34;</span>, <span style="color:#e6db74">&#34;&#34;</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (bootscript.empty()) {
+</span></span><span style="display:flex;"><span>        parser.ParseConfig(<span style="color:#e6db74">&#34;/system/etc/init/hw/init.rc&#34;</span>);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>parser.ParseConfig(<span style="color:#e6db74">&#34;/system/etc/init&#34;</span>)) {
+</span></span><span style="display:flex;"><span>            late_import_paths.emplace_back(<span style="color:#e6db74">&#34;/system/etc/init&#34;</span>);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// late_import is available only in Q and earlier release. As we don&#39;t
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// have system_ext in those versions, skip late_import for system_ext.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        parser.ParseConfig(<span style="color:#e6db74">&#34;/system_ext/etc/init&#34;</span>);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>parser.ParseConfig(<span style="color:#e6db74">&#34;/vendor/etc/init&#34;</span>)) {
+</span></span><span style="display:flex;"><span>            late_import_paths.emplace_back(<span style="color:#e6db74">&#34;/vendor/etc/init&#34;</span>);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>parser.ParseConfig(<span style="color:#e6db74">&#34;/odm/etc/init&#34;</span>)) {
+</span></span><span style="display:flex;"><span>            late_import_paths.emplace_back(<span style="color:#e6db74">&#34;/odm/etc/init&#34;</span>);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>parser.ParseConfig(<span style="color:#e6db74">&#34;/product/etc/init&#34;</span>)) {
+</span></span><span style="display:flex;"><span>            late_import_paths.emplace_back(<span style="color:#e6db74">&#34;/product/etc/init&#34;</span>);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>        parser.ParseConfig(bootscript);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>从代码中看出, 有多个 <code>init.rc</code> 文件:</p>
+<ol>
+<li><code>/system/etc/init/hw/init.rc</code> 是主要的 <code>init.rc</code> 文件, 在 init 进程初次执行时候就会被加载, 它负责系统的初始化设置;</li>
+<li><code>/{system,system_ext,vendor,odm,product}/etc/init/</code> 这些文件会在 <code>/system/etc/init/hw/init.rc</code> 加载之后被立即加载. 这些文件的作用如下:</li>
+</ol>
+<ul>
+<li><code>/system/etc/init/</code> 用于系统核心项目, 例如: SurfaceFlinger, MediaService, logd;</li>
+<li><code>/vendor/etc/init/</code> 由 SoC 厂商使用, 里面是一些 SoC 功能所需的操作或守护进程;</li>
+<li><code>/odm/etc/init/</code> 由设备制造商使用, 例如提供运动传感器或者其他周边功能需要的操作或守护进程.</li>
+</ul>
+<blockquote>
+<ul>
+<li>以前没有 <code>first stage</code> 挂载机制的旧设备能够在 <code>mount_all</code> 期间导入初始化脚本，但是不推荐使用, 并且这种用法在 Android Q 之后的设备上已被禁止。</li>
+</ul>
+</blockquote>
+<h3 id="initrc">init.rc</h3>
+<p>在 <code>/system/core/rootdir/</code> 下找到 <code>init.rc</code>:</p>
+<pre tabindex="0"><code>on late-init
+    # ...
+    # Now we can start zygote for devices with file based encryption
+    trigger zygote-start
+
+    # Remove a file to wake up anything waiting for firmware.
+    trigger firmware_mounts_complete
+
+    trigger early-boot
+    trigger boot
+
+
+# It is recommended to put unnecessary data/ initialization from post-fs-data
+# to start-zygote in device&#39;s init.rc to unblock zygote start.
+on zygote-start &amp;&amp; property:ro.crypto.state=unencrypted
+    wait_for_prop odsign.verification.done 1
+    # A/B update verifier that marks a successful boot.
+    exec_start update_verifier_nonencrypted
+    start statsd
+    start netd
+    start zygote
+    start zygote_secondary
+</code></pre><p>在 <code>init.rc</code> 中, 看到了眼熟的 <code>zygote</code>, 在这里触发了 <code>zygote-start</code>, <code>zygote</code>, <code>netd</code>, <code>statsd</code> 等进程.</p>
+<h2 id="zygote">zygote</h2>
+<p>在 <code>/system/core/rootdir/init.zygote64_32.rc</code> 脚本中:</p>
+<pre tabindex="0"><code>service zygote /system/bin/app_process64 -Xzygote /system/bin --zygote --start-system-server --socket-name=zygote
+    class main
+    priority -20
+    user root
+    group root readproc reserved_disk
+    socket zygote stream 660 root system
+    socket usap_pool_primary stream 660 root system
+    onrestart exec_background - system system -- /system/bin/vdc volume abort_fuse
+    onrestart write /sys/power/state on
+    onrestart restart audioserver
+    onrestart restart cameraserver
+    onrestart restart media
+    onrestart restart netd
+    onrestart restart wificond
+    task_profiles ProcessCapacityHigh MaxPerformance
+    critical window=${zygote.critical_window.minute:-off} target=zygote-fatal
+
+service zygote_secondary /system/bin/app_process32 -Xzygote /system/bin --zygote --socket-name=zygote_secondary --enable-lazy-preload
+    class main
+    priority -20
+    user root
+    group root readproc reserved_disk
+    socket zygote_secondary stream 660 root system
+    socket usap_pool_secondary stream 660 root system
+    onrestart restart zygote
+    task_profiles ProcessCapacityHigh MaxPerformance
+</code></pre><p>脚本中通过 <code>--zygote</code> 参数调用 <code>/system/bin/app_processxx</code> 进程, 这个 <code>app_process</code> 进程代码位于 <code> /frameworks/base/cmds/app_process/app_main.cpp</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C++" data-lang="C++"><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>(<span style="color:#66d9ef">int</span> argc, <span style="color:#66d9ef">char</span><span style="color:#f92672">*</span> <span style="color:#66d9ef">const</span> argv[])
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ..
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">while</span> (i <span style="color:#f92672">&lt;</span> argc) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span><span style="color:#f92672">*</span> arg <span style="color:#f92672">=</span> argv[i<span style="color:#f92672">++</span>];
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (strcmp(arg, <span style="color:#e6db74">&#34;--zygote&#34;</span>) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>            zygote <span style="color:#f92672">=</span> true;
+</span></span><span style="display:flex;"><span>            niceName <span style="color:#f92672">=</span> ZYGOTE_NICE_NAME;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>niceName.isEmpty()) {
+</span></span><span style="display:flex;"><span>        runtime.setArgv0(niceName.string(), true <span style="color:#75715e">/* setProcName */</span>);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> (zygote) {
+</span></span><span style="display:flex;"><span>        runtime.start(<span style="color:#e6db74">&#34;com.android.internal.os.ZygoteInit&#34;</span>, args, zygote);
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> (className) {
+</span></span><span style="display:flex;"><span>        runtime.start(<span style="color:#e6db74">&#34;com.android.internal.os.RuntimeInit&#34;</span>, args, zygote);
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>        fprintf(stderr, <span style="color:#e6db74">&#34;Error: no class name or --zygote supplied.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+</span></span><span style="display:flex;"><span>        app_usage();
+</span></span><span style="display:flex;"><span>        LOG_ALWAYS_FATAL(<span style="color:#e6db74">&#34;app_process: no class name or --zygote supplied.&#34;</span>);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>如果参数中带了 <code>--zygote</code>, niceName 就被设置为 <code>ZYGOTE_NICE_NAME</code>, 并启动 <code>com.android.internal.os.ZygoteInit</code>, 源码位于 <code>/frameworks/base/core/java/com/android/internal/os/ZygoteInit.java</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Java" data-lang="Java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">main</span><span style="color:#f92672">(</span>String<span style="color:#f92672">[]</span> argv<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    Runnable caller<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        zygoteServer <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ZygoteServer<span style="color:#f92672">(</span>isPrimaryZygote<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>startSystemServer<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            Runnable r <span style="color:#f92672">=</span> forkSystemServer<span style="color:#f92672">(</span>abiList<span style="color:#f92672">,</span> zygoteSocketName<span style="color:#f92672">,</span> zygoteServer<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// {@code r == null} in the parent (zygote) process, and {@code r != null} in the
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// child (system_server) process.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>r <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                r<span style="color:#f92672">.</span><span style="color:#a6e22e">run</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">return</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        Log<span style="color:#f92672">.</span><span style="color:#a6e22e">i</span><span style="color:#f92672">(</span>TAG<span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;Accepting command socket connections&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// The select loop returns early in the child process after a fork and
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// loops forever in the zygote.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        caller <span style="color:#f92672">=</span> zygoteServer<span style="color:#f92672">.</span><span style="color:#a6e22e">runSelectLoop</span><span style="color:#f92672">(</span>abiList<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>Throwable ex<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        Log<span style="color:#f92672">.</span><span style="color:#a6e22e">e</span><span style="color:#f92672">(</span>TAG<span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;System zygote died with fatal exception&#34;</span><span style="color:#f92672">,</span> ex<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">throw</span> ex<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span> <span style="color:#66d9ef">finally</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>zygoteServer <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            zygoteServer<span style="color:#f92672">.</span><span style="color:#a6e22e">closeServerSocket</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// We&#39;re in the child process and have exited the select loop. Proceed to execute the
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// command.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>caller <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        caller<span style="color:#f92672">.</span><span style="color:#a6e22e">run</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>创建 ZygoteServer, 监听请求, 源码位于 <code>/frameworks/base/core/java/com/android/internal/os/ZygoteServer.java</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Java" data-lang="Java"><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * Initialize the Zygote server with the Zygote server socket, USAP pool server socket, and USAP
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * pool event FD.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> *
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @param isPrimaryZygote  If this is the primary Zygote or not.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span>ZygoteServer<span style="color:#f92672">(</span><span style="color:#66d9ef">boolean</span> isPrimaryZygote<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    mUsapPoolEventFD <span style="color:#f92672">=</span> Zygote<span style="color:#f92672">.</span><span style="color:#a6e22e">getUsapPoolEventFD</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>isPrimaryZygote<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        mZygoteSocket <span style="color:#f92672">=</span> Zygote<span style="color:#f92672">.</span><span style="color:#a6e22e">createManagedSocketFromInitSocket</span><span style="color:#f92672">(</span>Zygote<span style="color:#f92672">.</span><span style="color:#a6e22e">PRIMARY_SOCKET_NAME</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        mUsapPoolSocket <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>                Zygote<span style="color:#f92672">.</span><span style="color:#a6e22e">createManagedSocketFromInitSocket</span><span style="color:#f92672">(</span>
+</span></span><span style="display:flex;"><span>                        Zygote<span style="color:#f92672">.</span><span style="color:#a6e22e">USAP_POOL_PRIMARY_SOCKET_NAME</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        mZygoteSocket <span style="color:#f92672">=</span> Zygote<span style="color:#f92672">.</span><span style="color:#a6e22e">createManagedSocketFromInitSocket</span><span style="color:#f92672">(</span>Zygote<span style="color:#f92672">.</span><span style="color:#a6e22e">SECONDARY_SOCKET_NAME</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        mUsapPoolSocket <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>                Zygote<span style="color:#f92672">.</span><span style="color:#a6e22e">createManagedSocketFromInitSocket</span><span style="color:#f92672">(</span>
+</span></span><span style="display:flex;"><span>                        Zygote<span style="color:#f92672">.</span><span style="color:#a6e22e">USAP_POOL_SECONDARY_SOCKET_NAME</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    mUsapPoolSupported <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    fetchUsapPoolPolicyProps<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>ZygoteServer 中的循环 <code>runSelectLoop()</code>, 接收新连接的请求, 并读取连接发来的命令, 这部分的具体功能我们后续再分析:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Java" data-lang="Java"><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * Runs the zygote process&#39;s select loop. Accepts new connections as
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * they happen, and reads commands from connections one spawn-request&#39;s
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * worth at a time.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> * @param abiList list of ABIs supported by this zygote.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"> */</span>
+</span></span><span style="display:flex;"><span>Runnable <span style="color:#a6e22e">runSelectLoop</span><span style="color:#f92672">(</span>String abiList<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    ArrayList<span style="color:#f92672">&lt;</span>FileDescriptor<span style="color:#f92672">&gt;</span> socketFDs <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ArrayList<span style="color:#f92672">&lt;&gt;();</span>
+</span></span><span style="display:flex;"><span>    ArrayList<span style="color:#f92672">&lt;</span>ZygoteConnection<span style="color:#f92672">&gt;</span> peers <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ArrayList<span style="color:#f92672">&lt;&gt;();</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    socketFDs<span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">(</span>mZygoteSocket<span style="color:#f92672">.</span><span style="color:#a6e22e">getFileDescriptor</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>    peers<span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">(</span><span style="color:#66d9ef">null</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    mUsapPoolRefillTriggerTimestamp <span style="color:#f92672">=</span> INVALID_TIMESTAMP<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">while</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">true</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">int</span> pollReturnValue<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            pollReturnValue <span style="color:#f92672">=</span> Os<span style="color:#f92672">.</span><span style="color:#a6e22e">poll</span><span style="color:#f92672">(</span>pollFDs<span style="color:#f92672">,</span> pollTimeoutMs<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>ErrnoException ex<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> RuntimeException<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;poll failed&#34;</span><span style="color:#f92672">,</span> ex<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>pollReturnValue <span style="color:#f92672">==</span> 0<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// The poll returned zero results either when the timeout value has been exceeded
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// or when a non-blocking poll is issued and no FDs are ready.  In either case it
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// is time to refill the pool.  This will result in a duplicate assignment when
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// the non-blocking poll returns zero results, but it avoids an additional
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// conditional in the else branch.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            mUsapPoolRefillTriggerTimestamp <span style="color:#f92672">=</span> INVALID_TIMESTAMP<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>            mUsapPoolRefillAction <span style="color:#f92672">=</span> UsapPoolRefillAction<span style="color:#f92672">.</span><span style="color:#a6e22e">DELAYED</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">boolean</span> usapPoolFDRead <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">while</span> <span style="color:#f92672">(--</span>pollIndex <span style="color:#f92672">&gt;=</span> 0<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> <span style="color:#f92672">((</span>pollFDs<span style="color:#f92672">[</span>pollIndex<span style="color:#f92672">].</span><span style="color:#a6e22e">revents</span> <span style="color:#f92672">&amp;</span> POLLIN<span style="color:#f92672">)</span> <span style="color:#f92672">==</span> 0<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">continue</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>pollIndex <span style="color:#f92672">==</span> 0<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e">// Zygote server socket
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                    ZygoteConnection newPeer <span style="color:#f92672">=</span> acceptCommandPeer<span style="color:#f92672">(</span>abiList<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                    peers<span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">(</span>newPeer<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                    socketFDs<span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">(</span>newPeer<span style="color:#f92672">.</span><span style="color:#a6e22e">getFileDescriptor</span><span style="color:#f92672">());</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>pollIndex <span style="color:#f92672">&lt;</span> usapPoolEventFDIndex<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e">// Session socket accepted from the Zygote server socket
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                        ZygoteConnection connection <span style="color:#f92672">=</span> peers<span style="color:#f92672">.</span><span style="color:#a6e22e">get</span><span style="color:#f92672">(</span>pollIndex<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">boolean</span> multipleForksOK <span style="color:#f92672">=</span> <span style="color:#f92672">!</span>isUsapPoolEnabled<span style="color:#f92672">()</span>
+</span></span><span style="display:flex;"><span>                                <span style="color:#f92672">&amp;&amp;</span> ZygoteHooks<span style="color:#f92672">.</span><span style="color:#a6e22e">isIndefiniteThreadSuspensionSafe</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">final</span> Runnable command <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>                                connection<span style="color:#f92672">.</span><span style="color:#a6e22e">processCommand</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">,</span> multipleForksOK<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#75715e">// TODO (chriswailes): Is this extra check necessary?
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>mIsForkChild<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#75715e">// We&#39;re in the child. We should always have a command to run at
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                            <span style="color:#75715e">// this stage if processCommand hasn&#39;t called &#34;exec&#34;.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>command <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                                <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> IllegalStateException<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;command == null&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#66d9ef">return</span> command<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#75715e">// We&#39;re in the server - we should never have any commands to run.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>command <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                                <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> IllegalStateException<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;command != null&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#75715e">// We don&#39;t know whether the remote side of the socket was closed or
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                            <span style="color:#75715e">// not until we attempt to read from it from processCommand. This
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                            <span style="color:#75715e">// shows up as a regular POLLIN event in our regular processing
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                            <span style="color:#75715e">// loop.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>connection<span style="color:#f92672">.</span><span style="color:#a6e22e">isClosedByPeer</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                                connection<span style="color:#f92672">.</span><span style="color:#a6e22e">closeSocket</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>                                peers<span style="color:#f92672">.</span><span style="color:#a6e22e">remove</span><span style="color:#f92672">(</span>pollIndex<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                                socketFDs<span style="color:#f92672">.</span><span style="color:#a6e22e">remove</span><span style="color:#f92672">(</span>pollIndex<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>Exception e<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(!</span>mIsForkChild<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#75715e">// We&#39;re in the server so any exception here is one that has taken
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                            <span style="color:#75715e">// place pre-fork while processing commands or reading / writing
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                            <span style="color:#75715e">// from the control socket. Make a loud noise about any such
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                            <span style="color:#75715e">// exceptions so that we know exactly what failed and why.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>                            Slog<span style="color:#f92672">.</span><span style="color:#a6e22e">e</span><span style="color:#f92672">(</span>TAG<span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;Exception executing zygote command: &#34;</span><span style="color:#f92672">,</span> e<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#75715e">// Make sure the socket is closed so that the other end knows
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                            <span style="color:#75715e">// immediately that something has gone wrong and doesn&#39;t time out
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                            <span style="color:#75715e">// waiting for a response.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                            ZygoteConnection conn <span style="color:#f92672">=</span> peers<span style="color:#f92672">.</span><span style="color:#a6e22e">remove</span><span style="color:#f92672">(</span>pollIndex<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                            conn<span style="color:#f92672">.</span><span style="color:#a6e22e">closeSocket</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                            socketFDs<span style="color:#f92672">.</span><span style="color:#a6e22e">remove</span><span style="color:#f92672">(</span>pollIndex<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#75715e">// We&#39;re in the child so any exception caught here has happened post
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                            <span style="color:#75715e">// fork and before we execute ActivityThread.main (or any other
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                            <span style="color:#75715e">// main() method). Log the details of the exception and bring down
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                            <span style="color:#75715e">// the process.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                            Log<span style="color:#f92672">.</span><span style="color:#a6e22e">e</span><span style="color:#f92672">(</span>TAG<span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;Caught post-fork exception in child process.&#34;</span><span style="color:#f92672">,</span> e<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#66d9ef">throw</span> e<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#f92672">}</span> <span style="color:#66d9ef">finally</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#75715e">// Reset the child flag, in the event that the child process is a child-
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                        <span style="color:#75715e">// zygote. The flag will not be consulted this loop pass after the
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                        <span style="color:#75715e">// Runnable is returned.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                        mIsForkChild <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h3 id="zygote-总结">Zygote 总结</h3>
+<ol>
+<li>通过 init.rc 脚本启动 Zygote;</li>
+<li>Zygote 创建 ServerSocket 来接收客户端请求;</li>
+<li>fork 出 SystemServer 进程;</li>
+</ol>
+<h3 id="问题">问题</h3>
+<ul>
+<li>USAP 是什么?</li>
+</ul>
+<h2 id="systemserver">SystemServer</h2>
+<p>在前面 ZygoteInit 的 main 方法调用了 <code>forkSystemServer()</code> 方法, 返回一个 Runnable 对象:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Java" data-lang="Java"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> Runnable <span style="color:#a6e22e">forkSystemServer</span><span style="color:#f92672">(</span>String abiList<span style="color:#f92672">,</span> String socketName<span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>            ZygoteServer zygoteServer<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/* Hardcoded command line to start the system server */</span>
+</span></span><span style="display:flex;"><span>    String<span style="color:#f92672">[]</span> args <span style="color:#f92672">=</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;--setuid=1000&#34;</span><span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;--setgid=1000&#34;</span><span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;--setgroups=1001,1002,1003,1004,1005,1006,1007,1008,1009,1010,1018,1021,1023,&#34;</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;1024,1032,1065,3001,3002,3003,3006,3007,3009,3010,3011&#34;</span><span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;--capabilities=&#34;</span> <span style="color:#f92672">+</span> capabilities <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;,&#34;</span> <span style="color:#f92672">+</span> capabilities<span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;--nice-name=system_server&#34;</span><span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;--runtime-args&#34;</span><span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;--target-sdk-version=&#34;</span> <span style="color:#f92672">+</span> VMRuntime<span style="color:#f92672">.</span><span style="color:#a6e22e">SDK_VERSION_CUR_DEVELOPMENT</span><span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;com.android.server.SystemServer&#34;</span><span style="color:#f92672">,</span>  <span style="color:#75715e">// 记住这个参数, 后续会用到
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">};</span>
+</span></span><span style="display:flex;"><span>    ZygoteArguments parsedArgs<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> pid<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        ZygoteCommandBuffer commandBuffer <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ZygoteCommandBuffer<span style="color:#f92672">(</span>args<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            parsedArgs <span style="color:#f92672">=</span> ZygoteArguments<span style="color:#f92672">.</span><span style="color:#a6e22e">getInstance</span><span style="color:#f92672">(</span>commandBuffer<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>EOFException e<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> AssertionError<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Unexpected argument error for forking system server&#34;</span><span style="color:#f92672">,</span> e<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">/* Request to fork the system server process */</span>
+</span></span><span style="display:flex;"><span>        pid <span style="color:#f92672">=</span> Zygote<span style="color:#f92672">.</span><span style="color:#a6e22e">forkSystemServer</span><span style="color:#f92672">(</span>
+</span></span><span style="display:flex;"><span>                parsedArgs<span style="color:#f92672">.</span><span style="color:#a6e22e">mUid</span><span style="color:#f92672">,</span> parsedArgs<span style="color:#f92672">.</span><span style="color:#a6e22e">mGid</span><span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>                parsedArgs<span style="color:#f92672">.</span><span style="color:#a6e22e">mGids</span><span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>                parsedArgs<span style="color:#f92672">.</span><span style="color:#a6e22e">mRuntimeFlags</span><span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">null</span><span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>                parsedArgs<span style="color:#f92672">.</span><span style="color:#a6e22e">mPermittedCapabilities</span><span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>                parsedArgs<span style="color:#f92672">.</span><span style="color:#a6e22e">mEffectiveCapabilities</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>IllegalArgumentException ex<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> RuntimeException<span style="color:#f92672">(</span>ex<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/* For child process */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>pid <span style="color:#f92672">==</span> 0<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>hasSecondZygote<span style="color:#f92672">(</span>abiList<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            waitForSecondaryZygote<span style="color:#f92672">(</span>socketName<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        zygoteServer<span style="color:#f92672">.</span><span style="color:#a6e22e">closeServerSocket</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> handleSystemServerProcess<span style="color:#f92672">(</span>parsedArgs<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>上面代码通过 <code>Zygote.forkSystemServer()</code> 创建了 system server 进程, 这个方法最终是调用了一个 native 方法 <code>nativeForkSystemServer()</code> 来创建进程, 这个方法位于 <code> /frameworks/base/core/jni/com_android_internal_os_Zygote.cpp</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C++" data-lang="C++"><span style="display:flex;"><span><span style="color:#66d9ef">static</span> jint <span style="color:#a6e22e">com_android_internal_os_Zygote_nativeForkSystemServer</span>(
+</span></span><span style="display:flex;"><span>        JNIEnv<span style="color:#f92672">*</span> env, jclass, uid_t uid, gid_t gid, jintArray gids,
+</span></span><span style="display:flex;"><span>        jint runtime_flags, jobjectArray rlimits, jlong permitted_capabilities,
+</span></span><span style="display:flex;"><span>        jlong effective_capabilities) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>    pid_t pid <span style="color:#f92672">=</span> zygote<span style="color:#f92672">::</span>ForkCommon(env, true,
+</span></span><span style="display:flex;"><span>                                 fds_to_close,
+</span></span><span style="display:flex;"><span>                                 fds_to_ignore,
+</span></span><span style="display:flex;"><span>                                 true);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (pid <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// System server prcoess does not need data isolation so no need to
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// know pkg_data_info_list.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        SpecializeCommon(env, uid, gid, gids, runtime_flags, rlimits, permitted_capabilities,
+</span></span><span style="display:flex;"><span>                        effective_capabilities, MOUNT_EXTERNAL_DEFAULT, <span style="color:#66d9ef">nullptr</span>, <span style="color:#66d9ef">nullptr</span>, true,
+</span></span><span style="display:flex;"><span>                        false, <span style="color:#66d9ef">nullptr</span>, <span style="color:#66d9ef">nullptr</span>, <span style="color:#75715e">/* is_top_app= */</span> false,
+</span></span><span style="display:flex;"><span>                        <span style="color:#75715e">/* pkg_data_info_list */</span> <span style="color:#66d9ef">nullptr</span>,
+</span></span><span style="display:flex;"><span>                        <span style="color:#75715e">/* allowlisted_data_info_list */</span> <span style="color:#66d9ef">nullptr</span>, false, false);
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> (pid <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// The zygote process checks whether the child process has died or not.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        ALOGI(<span style="color:#e6db74">&#34;System server process %d has been created&#34;</span>, pid);
+</span></span><span style="display:flex;"><span>        gSystemServerPid <span style="color:#f92672">=</span> pid;
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// There is a slight window that the system server process has crashed
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// but it went unnoticed because we haven&#39;t published its pid yet. So
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// we recheck here just to make sure that all is well.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">int</span> status;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (waitpid(pid, <span style="color:#f92672">&amp;</span>status, WNOHANG) <span style="color:#f92672">==</span> pid) {
+</span></span><span style="display:flex;"><span>            ALOGE(<span style="color:#e6db74">&#34;System server process %d has died. Restarting Zygote!&#34;</span>, pid);
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 如果 system server 挂掉了, 重启 Zygote.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            RuntimeAbort(env, __LINE__, <span style="color:#e6db74">&#34;System server process has died. Restarting Zygote!&#34;</span>);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (UsePerAppMemcg()) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// Assign system_server to the correct memory cgroup.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// Not all devices mount memcg so check if it is mounted first
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#75715e">// to avoid unnecessarily printing errors and denials in the logs.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>SetTaskProfiles(pid, std<span style="color:#f92672">::</span>vector<span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>string<span style="color:#f92672">&gt;</span>{<span style="color:#e6db74">&#34;SystemMemoryProcess&#34;</span>})) {
+</span></span><span style="display:flex;"><span>                ALOGE(<span style="color:#e6db74">&#34;couldn&#39;t add process %d into system memcg group&#34;</span>, pid);
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> pid;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>从代码注释中可以看到, 如果 system server 挂掉了, 就会重启 Zygote 进程. system server 作为 Zygote 启动的第一个进程, 其地位确实非常高, 到了与 Zygote 同生共死的地步.</p>
+<h3 id="system-server-的作用">system server 的作用</h3>
+<p>system server 调用 ZygoteInit 的 <code>handleSystemServerProcess()</code> 方法来发挥自己的作用:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Java" data-lang="Java"><span style="display:flex;"><span> <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> Runnable <span style="color:#a6e22e">handleSystemServerProcess</span><span style="color:#f92672">(</span>ZygoteArguments parsedArgs<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>parsedArgs<span style="color:#f92672">.</span><span style="color:#a6e22e">mInvokeWith</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        String<span style="color:#f92672">[]</span> args <span style="color:#f92672">=</span> parsedArgs<span style="color:#f92672">.</span><span style="color:#a6e22e">mRemainingArgs</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// If we have a non-null system server class path, we&#39;ll have to duplicate the
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// existing arguments and append the classpath to it. ART will handle the classpath
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#75715e">// correctly when we exec a new process.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>systemServerClasspath <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            String<span style="color:#f92672">[]</span> amendedArgs <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> String<span style="color:#f92672">[</span>args<span style="color:#f92672">.</span><span style="color:#a6e22e">length</span> <span style="color:#f92672">+</span> 2<span style="color:#f92672">];</span>
+</span></span><span style="display:flex;"><span>            amendedArgs<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;-cp&#34;</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>            amendedArgs<span style="color:#f92672">[</span>1<span style="color:#f92672">]</span> <span style="color:#f92672">=</span> systemServerClasspath<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>            System<span style="color:#f92672">.</span><span style="color:#a6e22e">arraycopy</span><span style="color:#f92672">(</span>args<span style="color:#f92672">,</span> 0<span style="color:#f92672">,</span> amendedArgs<span style="color:#f92672">,</span> 2<span style="color:#f92672">,</span> args<span style="color:#f92672">.</span><span style="color:#a6e22e">length</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>            args <span style="color:#f92672">=</span> amendedArgs<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        WrapperInit<span style="color:#f92672">.</span><span style="color:#a6e22e">execApplication</span><span style="color:#f92672">(</span>parsedArgs<span style="color:#f92672">.</span><span style="color:#a6e22e">mInvokeWith</span><span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>                parsedArgs<span style="color:#f92672">.</span><span style="color:#a6e22e">mNiceName</span><span style="color:#f92672">,</span> parsedArgs<span style="color:#f92672">.</span><span style="color:#a6e22e">mTargetSdkVersion</span><span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>                VMRuntime<span style="color:#f92672">.</span><span style="color:#a6e22e">getCurrentInstructionSet</span><span style="color:#f92672">(),</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">,</span> args<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> IllegalStateException<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Unexpected return from WrapperInit.execApplication&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        ClassLoader cl <span style="color:#f92672">=</span> getOrCreateSystemServerClassLoader<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>cl <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            Thread<span style="color:#f92672">.</span><span style="color:#a6e22e">currentThread</span><span style="color:#f92672">().</span><span style="color:#a6e22e">setContextClassLoader</span><span style="color:#f92672">(</span>cl<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">/*
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">         * Pass the remaining arguments to SystemServer.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">         */</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> ZygoteInit<span style="color:#f92672">.</span><span style="color:#a6e22e">zygoteInit</span><span style="color:#f92672">(</span>parsedArgs<span style="color:#f92672">.</span><span style="color:#a6e22e">mTargetSdkVersion</span><span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>                parsedArgs<span style="color:#f92672">.</span><span style="color:#a6e22e">mDisabledCompatChanges</span><span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>                parsedArgs<span style="color:#f92672">.</span><span style="color:#a6e22e">mRemainingArgs</span><span style="color:#f92672">,</span> cl<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>查看 <code>zygoteInit()</code> 方法:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Java" data-lang="Java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> Runnable <span style="color:#a6e22e">zygoteInit</span><span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> targetSdkVersion<span style="color:#f92672">,</span> <span style="color:#66d9ef">long</span><span style="color:#f92672">[]</span> disabledCompatChanges<span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>            String<span style="color:#f92672">[]</span> argv<span style="color:#f92672">,</span> ClassLoader classLoader<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>RuntimeInit<span style="color:#f92672">.</span><span style="color:#a6e22e">DEBUG</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        Slog<span style="color:#f92672">.</span><span style="color:#a6e22e">d</span><span style="color:#f92672">(</span>RuntimeInit<span style="color:#f92672">.</span><span style="color:#a6e22e">TAG</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;RuntimeInit: Starting application from zygote&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    Trace<span style="color:#f92672">.</span><span style="color:#a6e22e">traceBegin</span><span style="color:#f92672">(</span>Trace<span style="color:#f92672">.</span><span style="color:#a6e22e">TRACE_TAG_ACTIVITY_MANAGER</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;ZygoteInit&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    RuntimeInit<span style="color:#f92672">.</span><span style="color:#a6e22e">redirectLogStreams</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    RuntimeInit<span style="color:#f92672">.</span><span style="color:#a6e22e">commonInit</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>    ZygoteInit<span style="color:#f92672">.</span><span style="color:#a6e22e">nativeZygoteInit</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> RuntimeInit<span style="color:#f92672">.</span><span style="color:#a6e22e">applicationInit</span><span style="color:#f92672">(</span>targetSdkVersion<span style="color:#f92672">,</span> disabledCompatChanges<span style="color:#f92672">,</span> argv<span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>            classLoader<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>这个 <code>RuntimeInit</code> 位于 <code>/frameworks/base/core/java/com/android/internal/os/RuntimeInit.java</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Java" data-lang="Java"><span style="display:flex;"><span><span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">static</span> Runnable <span style="color:#a6e22e">applicationInit</span><span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> targetSdkVersion<span style="color:#f92672">,</span> <span style="color:#66d9ef">long</span><span style="color:#f92672">[]</span> disabledCompatChanges<span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>        String<span style="color:#f92672">[]</span> argv<span style="color:#f92672">,</span> ClassLoader classLoader<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// If the application calls System.exit(), terminate the process
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// immediately without running any shutdown hooks.  It is not possible to
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// shutdown an Android application gracefully.  Among other things, the
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// Android runtime shutdown hooks close the Binder driver, which can cause
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// leftover running threads to crash before the process actually exits.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    nativeSetExitWithoutCleanup<span style="color:#f92672">(</span><span style="color:#66d9ef">true</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    VMRuntime<span style="color:#f92672">.</span><span style="color:#a6e22e">getRuntime</span><span style="color:#f92672">().</span><span style="color:#a6e22e">setTargetSdkVersion</span><span style="color:#f92672">(</span>targetSdkVersion<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    VMRuntime<span style="color:#f92672">.</span><span style="color:#a6e22e">getRuntime</span><span style="color:#f92672">().</span><span style="color:#a6e22e">setDisabledCompatChanges</span><span style="color:#f92672">(</span>disabledCompatChanges<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">final</span> Arguments args <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Arguments<span style="color:#f92672">(</span>argv<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// The end of of the RuntimeInit event (see #zygoteInit).
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    Trace<span style="color:#f92672">.</span><span style="color:#a6e22e">traceEnd</span><span style="color:#f92672">(</span>Trace<span style="color:#f92672">.</span><span style="color:#a6e22e">TRACE_TAG_ACTIVITY_MANAGER</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Remaining arguments are passed to the start class&#39;s static main
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">return</span> findStaticMain<span style="color:#f92672">(</span>args<span style="color:#f92672">.</span><span style="color:#a6e22e">startClass</span><span style="color:#f92672">,</span> args<span style="color:#f92672">.</span><span style="color:#a6e22e">startArgs</span><span style="color:#f92672">,</span> classLoader<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>来到了 <code>findStaticMain()</code> 方法, 向这里传入了一个 args.startClass 参数, 就是之前创建 system server 进程时候使用的 <code>com.android.server.SystemServer</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Java" data-lang="Java"><span style="display:flex;"><span><span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">static</span> Runnable <span style="color:#a6e22e">findStaticMain</span><span style="color:#f92672">(</span>String className<span style="color:#f92672">,</span> String<span style="color:#f92672">[]</span> argv<span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>        ClassLoader classLoader<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    Class<span style="color:#f92672">&lt;?&gt;</span> cl<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        cl <span style="color:#f92672">=</span> Class<span style="color:#f92672">.</span><span style="color:#a6e22e">forName</span><span style="color:#f92672">(</span>className<span style="color:#f92672">,</span> <span style="color:#66d9ef">true</span><span style="color:#f92672">,</span> classLoader<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>ClassNotFoundException ex<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> RuntimeException<span style="color:#f92672">(</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;Missing class when invoking static main &#34;</span> <span style="color:#f92672">+</span> className<span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>                ex<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    Method m<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        m <span style="color:#f92672">=</span> cl<span style="color:#f92672">.</span><span style="color:#a6e22e">getMethod</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;main&#34;</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">new</span> Class<span style="color:#f92672">[]</span> <span style="color:#f92672">{</span> String<span style="color:#f92672">[].</span><span style="color:#a6e22e">class</span> <span style="color:#f92672">});</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>NoSuchMethodException ex<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> RuntimeException<span style="color:#f92672">(</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;Missing static main on &#34;</span> <span style="color:#f92672">+</span> className<span style="color:#f92672">,</span> ex<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>SecurityException ex<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> RuntimeException<span style="color:#f92672">(</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;Problem getting static main on &#34;</span> <span style="color:#f92672">+</span> className<span style="color:#f92672">,</span> ex<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> modifiers <span style="color:#f92672">=</span> m<span style="color:#f92672">.</span><span style="color:#a6e22e">getModifiers</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(!</span> <span style="color:#f92672">(</span>Modifier<span style="color:#f92672">.</span><span style="color:#a6e22e">isStatic</span><span style="color:#f92672">(</span>modifiers<span style="color:#f92672">)</span> <span style="color:#f92672">&amp;&amp;</span> Modifier<span style="color:#f92672">.</span><span style="color:#a6e22e">isPublic</span><span style="color:#f92672">(</span>modifiers<span style="color:#f92672">)))</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> RuntimeException<span style="color:#f92672">(</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;Main method is not public and static on &#34;</span> <span style="color:#f92672">+</span> className<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/*
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * This throw gets caught in ZygoteInit.main(), which responds
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * by invoking the exception&#39;s run() method. This arrangement
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * clears up all the stack frames that were required in setting
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * up the process.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> MethodAndArgsCaller<span style="color:#f92672">(</span>m<span style="color:#f92672">,</span> argv<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>这个方法通过反射拿到了 <code>com.android.server.SystemServer</code> 的 main 方法, 创建了一个 <code>MethodAndArgsCaller</code> 对象返回给 <code>ZygoteInit</code> 的 <code>forkSystemServer()</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Java" data-lang="Java"><span style="display:flex;"><span> <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>startSystemServer<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    Runnable r <span style="color:#f92672">=</span> forkSystemServer<span style="color:#f92672">(</span>abiList<span style="color:#f92672">,</span> zygoteSocketName<span style="color:#f92672">,</span> zygoteServer<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// {@code r == null} in the parent (zygote) process, and {@code r != null} in the
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// child (system_server) process.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>r <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        r<span style="color:#f92672">.</span><span style="color:#a6e22e">run</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span><span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>看看这个 <code>MethodAndArgsCaller</code> 对象的 <code>run</code> 方法:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Java" data-lang="Java"><span style="display:flex;"><span><span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">  * Helper class which holds a method and arguments and can call them. This is used as part of
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">  * a trampoline to get rid of the initial process setup stack frames.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">  */</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MethodAndArgsCaller</span> <span style="color:#66d9ef">implements</span> Runnable <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/** method to call */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> Method mMethod<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/** argument array */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> String<span style="color:#f92672">[]</span> mArgs<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">MethodAndArgsCaller</span><span style="color:#f92672">(</span>Method method<span style="color:#f92672">,</span> String<span style="color:#f92672">[]</span> args<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        mMethod <span style="color:#f92672">=</span> method<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>        mArgs <span style="color:#f92672">=</span> args<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">run</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            mMethod<span style="color:#f92672">.</span><span style="color:#a6e22e">invoke</span><span style="color:#f92672">(</span><span style="color:#66d9ef">null</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">new</span> Object<span style="color:#f92672">[]</span> <span style="color:#f92672">{</span> mArgs <span style="color:#f92672">});</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>IllegalAccessException ex<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> RuntimeException<span style="color:#f92672">(</span>ex<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>InvocationTargetException ex<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            Throwable cause <span style="color:#f92672">=</span> ex<span style="color:#f92672">.</span><span style="color:#a6e22e">getCause</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>cause <span style="color:#66d9ef">instanceof</span> RuntimeException<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">throw</span> <span style="color:#f92672">(</span>RuntimeException<span style="color:#f92672">)</span> cause<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>cause <span style="color:#66d9ef">instanceof</span> Error<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">throw</span> <span style="color:#f92672">(</span>Error<span style="color:#f92672">)</span> cause<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> RuntimeException<span style="color:#f92672">(</span>ex<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>通过这个 <code>run()</code> 方法, 调用了 <code>com.android.server.SystemServer</code> 的 main 方法, 其源码位于 <code>/frameworks/base/services/java/com/android/server/SystemServer.java</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Java" data-lang="Java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">main</span><span style="color:#f92672">(</span>String<span style="color:#f92672">[]</span> args<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> SystemServer<span style="color:#f92672">().</span><span style="color:#a6e22e">run</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>Hmmm&hellip; 看看这个 run 方法:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Java" data-lang="Java"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">run</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Initialize native services.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    System<span style="color:#f92672">.</span><span style="color:#a6e22e">loadLibrary</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;android_servers&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Initialize the system context.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    createSystemContext<span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Call per-process mainline module initialization.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    ActivityThread<span style="color:#f92672">.</span><span style="color:#a6e22e">initializeMainlineModules</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Sets the dumper service
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    ServiceManager<span style="color:#f92672">.</span><span style="color:#a6e22e">addService</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;system_server_dumper&#34;</span><span style="color:#f92672">,</span> mDumper<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    mDumper<span style="color:#f92672">.</span><span style="color:#a6e22e">addDumpable</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Create the system service manager.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    mSystemServiceManager <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> SystemServiceManager<span style="color:#f92672">(</span>mSystemContext<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    mSystemServiceManager<span style="color:#f92672">.</span><span style="color:#a6e22e">setStartInfo</span><span style="color:#f92672">(</span>mRuntimeRestart<span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>            mRuntimeStartElapsedTime<span style="color:#f92672">,</span> mRuntimeStartUptime<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    mDumper<span style="color:#f92672">.</span><span style="color:#a6e22e">addDumpable</span><span style="color:#f92672">(</span>mSystemServiceManager<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    LocalServices<span style="color:#f92672">.</span><span style="color:#a6e22e">addService</span><span style="color:#f92672">(</span>SystemServiceManager<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">,</span> mSystemServiceManager<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Start services.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        t<span style="color:#f92672">.</span><span style="color:#a6e22e">traceBegin</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;StartServices&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        startBootstrapServices<span style="color:#f92672">(</span>t<span style="color:#f92672">);</span>  <span style="color:#75715e">// 启动系统启动所需的一小部分关键服务.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        startCoreServices<span style="color:#f92672">(</span>t<span style="color:#f92672">);</span>       <span style="color:#75715e">// 启动那些不在上面一步启动的必要服务, 如电池, SystemConfigService等.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        startOtherServices<span style="color:#f92672">(</span>t<span style="color:#f92672">);</span>      <span style="color:#75715e">// 启动 AlarmManagerService, InputManagerService等
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>Throwable ex<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        Slog<span style="color:#f92672">.</span><span style="color:#a6e22e">e</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;System&#34;</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;******************************************&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        Slog<span style="color:#f92672">.</span><span style="color:#a6e22e">e</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;System&#34;</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;************ Failure starting system services&#34;</span><span style="color:#f92672">,</span> ex<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">throw</span> ex<span style="color:#f92672">;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span> <span style="color:#66d9ef">finally</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        t<span style="color:#f92672">.</span><span style="color:#a6e22e">traceEnd</span><span style="color:#f92672">();</span> <span style="color:#75715e">// StartServices
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Loop forever.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// 进入死循环, 让进程保持存活
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    Looper<span style="color:#f92672">.</span><span style="color:#a6e22e">loop</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> RuntimeException<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Main thread loop unexpectedly exited&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>上面代码还是比较清楚的, 这里启动了 SystemContex, SystemServiceManager, AlarmManagerService 等一系列我们熟悉的 framework 层服务:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Java" data-lang="Java"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">startBootstrapServices</span><span style="color:#f92672">(</span><span style="color:#a6e22e">@NonNull</span> TimingsTraceAndSlog t<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// Activity manager runs the show.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    t<span style="color:#f92672">.</span><span style="color:#a6e22e">traceBegin</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;StartActivityManager&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// TODO: Might need to move after migration to WM.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    ActivityTaskManagerService atm <span style="color:#f92672">=</span> mSystemServiceManager<span style="color:#f92672">.</span><span style="color:#a6e22e">startService</span><span style="color:#f92672">(</span>
+</span></span><span style="display:flex;"><span>            ActivityTaskManagerService<span style="color:#f92672">.</span><span style="color:#a6e22e">Lifecycle</span><span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">).</span><span style="color:#a6e22e">getService</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 启动 ActivityManagerService
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    mActivityManagerService <span style="color:#f92672">=</span> ActivityManagerService<span style="color:#f92672">.</span><span style="color:#a6e22e">Lifecycle</span><span style="color:#f92672">.</span><span style="color:#a6e22e">startService</span><span style="color:#f92672">(</span>
+</span></span><span style="display:flex;"><span>            mSystemServiceManager<span style="color:#f92672">,</span> atm<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    mActivityManagerService<span style="color:#f92672">.</span><span style="color:#a6e22e">setSystemServiceManager</span><span style="color:#f92672">(</span>mSystemServiceManager<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    mActivityManagerService<span style="color:#f92672">.</span><span style="color:#a6e22e">setInstaller</span><span style="color:#f92672">(</span>installer<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>    mWindowManagerGlobalLock <span style="color:#f92672">=</span> atm<span style="color:#f92672">.</span><span style="color:#a6e22e">getGlobalLock</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>    t<span style="color:#f92672">.</span><span style="color:#a6e22e">traceEnd</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">startOtherServices</span><span style="color:#f92672">(</span><span style="color:#a6e22e">@NonNull</span> TimingsTraceAndSlog t<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 启动 AlarmManagerService
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        t<span style="color:#f92672">.</span><span style="color:#a6e22e">traceBegin</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;StartAlarmManagerService&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        mSystemServiceManager<span style="color:#f92672">.</span><span style="color:#a6e22e">startService</span><span style="color:#f92672">(</span>ALARM_MANAGER_SERVICE_CLASS<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        t<span style="color:#f92672">.</span><span style="color:#a6e22e">traceEnd</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 启动 InputManagerService
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        t<span style="color:#f92672">.</span><span style="color:#a6e22e">traceBegin</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;StartInputManagerService&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        inputManager <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> InputManagerService<span style="color:#f92672">(</span>context<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        t<span style="color:#f92672">.</span><span style="color:#a6e22e">traceEnd</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 启动 DeviceStateManagerService
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        t<span style="color:#f92672">.</span><span style="color:#a6e22e">traceBegin</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;DeviceStateManagerService&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        mSystemServiceManager<span style="color:#f92672">.</span><span style="color:#a6e22e">startService</span><span style="color:#f92672">(</span>DeviceStateManagerService<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        t<span style="color:#f92672">.</span><span style="color:#a6e22e">traceEnd</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(!</span>disableCameraService<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>            t<span style="color:#f92672">.</span><span style="color:#a6e22e">traceBegin</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;StartCameraServiceProxy&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 启动 CameraServiceProxy
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            mSystemServiceManager<span style="color:#f92672">.</span><span style="color:#a6e22e">startService</span><span style="color:#f92672">(</span>CameraServiceProxy<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>            t<span style="color:#f92672">.</span><span style="color:#a6e22e">traceEnd</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        t<span style="color:#f92672">.</span><span style="color:#a6e22e">traceBegin</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;StartWindowManagerService&#34;</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// WMS needs sensor service ready
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        mSystemServiceManager<span style="color:#f92672">.</span><span style="color:#a6e22e">startBootPhase</span><span style="color:#f92672">(</span>t<span style="color:#f92672">,</span> SystemService<span style="color:#f92672">.</span><span style="color:#a6e22e">PHASE_WAIT_FOR_SENSOR_SERVICE</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 启动 WindowManagerService
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        wm <span style="color:#f92672">=</span> WindowManagerService<span style="color:#f92672">.</span><span style="color:#a6e22e">main</span><span style="color:#f92672">(</span>context<span style="color:#f92672">,</span> inputManager<span style="color:#f92672">,</span> <span style="color:#f92672">!</span>mFirstBoot<span style="color:#f92672">,</span> mOnlyCore<span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">new</span> PhoneWindowManager<span style="color:#f92672">(),</span> mActivityManagerService<span style="color:#f92672">.</span><span style="color:#a6e22e">mActivityTaskManager</span><span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        ServiceManager<span style="color:#f92672">.</span><span style="color:#a6e22e">addService</span><span style="color:#f92672">(</span>Context<span style="color:#f92672">.</span><span style="color:#a6e22e">WINDOW_SERVICE</span><span style="color:#f92672">,</span> wm<span style="color:#f92672">,</span> <span style="color:#75715e">/* allowIsolated= */</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>                DUMP_FLAG_PRIORITY_CRITICAL <span style="color:#f92672">|</span> DUMP_FLAG_PROTO<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        ServiceManager<span style="color:#f92672">.</span><span style="color:#a6e22e">addService</span><span style="color:#f92672">(</span>Context<span style="color:#f92672">.</span><span style="color:#a6e22e">INPUT_SERVICE</span><span style="color:#f92672">,</span> inputManager<span style="color:#f92672">,</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">/* allowIsolated= */</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">,</span> DUMP_FLAG_PRIORITY_CRITICAL<span style="color:#f92672">);</span>
+</span></span><span style="display:flex;"><span>        t<span style="color:#f92672">.</span><span style="color:#a6e22e">traceEnd</span><span style="color:#f92672">();</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h3 id="systemserver-总结">SystemServer 总结</h3>
+<p>SystemServer 的调用还是比较清晰的, Zygote 进程启动 SystemServer, SystemServer 启动一系列 framwork 层的服务, 如我们常常听到的 ActivityManagerService, AlarmManagerService 等, 然后进入 <code>Looper.loop()</code> 死循环, 保持进程一直存活.</p>
+<hr>
+<p>参考:
+<a href="https://blog.csdn.net/Innost/article/details/47207845#t7">深入理解zygote</a>
+<a href="http://www.aospxref.com/android-12.0.0_r3/xref/">Android 源码</a></p>
+
+</div>
+
+
+    </main>
+
+    
+      
+    
+  </body>
+</html>
