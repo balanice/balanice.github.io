@@ -1,11 +1,11 @@
 ---
-title: "Android 开机流程"
+title: "Android 开机启动流程"
 date: 2022-07-22T08:39:54+08:00
 draft: true
 ---
 >* 本文代码基于 Android 12
 
-Android 系统底层基于 Linux 内核, 其启动过程与 Linux 系统类似, 在按下电源键以后, 首先启动的是引导程序 `BootLoader`, Linux 上一般是 `GRUB`. 我们平时刷机一般都是需要先解锁 `BootLoader`, 安装第三方 Recovery, 如 `TWRP`, 然后才能刷机. 
+Android 系统底层基于 Linux 内核, 其启动过程与 Linux 系统类似, 在按下电源键以后, 首先启动的是引导程序 `BootLoader`, Linux 上一般是 `GRUB`. 我们平时刷机一般都是需要先解锁 `BootLoader`, 安装第三方 Recovery, 如 `TWRP`, 然后才能刷机, 当然厂商有更便捷的刷机方式, 不过普通人一般接触不到, 此处不做讨论.
 
 >* `BootLoader` 为什么要加锁? 当然是出于安全原因, 为了保护手机中的数据. 比如有人捡到一台手机, 这个手机有锁屏密码, 但是 `BootLoader` 未加锁, 那么别人就可以轻易通过刷机的方式绕过锁屏密码, 类似于给电脑重装系统.
 
@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
 ```
 
 `init` 进程被分为三个阶段, `first stage init`, `SELinux setup`, `second stage init`
-* `first stage init` 代码位于 `/system/core/init/first_stage_init.cpp` 的 `FirstStageMain()`. 这个阶段主要是最小化设置设备, 为加载系统剩余功能做准备. 尤其是挂载 /dev, /proc 和包含系统代码的所有分区, 并将有 ramdisk 的设备的 `system.img` 挂载到 /. 这个阶段执行结束后会以 `selinux_setup` 的参数执行 `/system/bin/init`;
+* `first stage init` 代码位于 `/system/core/init/first_stage_init.cpp` 的 `FirstStageMain()`. 这个阶段主要是最小化设置设备, 为加载系统剩余功能做准备. 尤其是挂载 /dev, /proc 和包含系统代码的所有分区, 并将有 ramdisk 的设备的 `system.img` 挂载到 `/`. 这个阶段执行结束后会以 `selinux_setup` 的参数执行 `/system/bin/init`;
 * `SELinux setup`  代码位于 `/system/core/init/selinux.cpp` 的 `SetupSelinux()`. 这个阶段 SELinux 会被编译加载到系统中. 这个阶段执行结束后, 会再次以 `second_stage` 参数执行 `/system/bin/init`;
 * `second stage init` 代码位于 `/system/core/init/init.cpp` 的 `SecondStageMain()`. 这个阶段会通过 `init.rc` 脚本执行主要的初始化和启动服务进程工作.
 
@@ -90,13 +90,13 @@ static void LoadBootScripts(ActionManager& action_manager, ServiceList& service_
 ```
 
 从代码中看出, 有多个 `init.rc` 文件:
-1. `/system/etc/init/hw/init.rc` 是主要的 .rc 文件, 在 init 进程初次执行时候就会被加载, 它负责系统的初始化设置;
+1. `/system/etc/init/hw/init.rc` 是主要的 `init.rc` 文件, 在 init 进程初次执行时候就会被加载, 它负责系统的初始化设置;
 2. `/{system,system_ext,vendor,odm,product}/etc/init/` 这些文件会在 `/system/etc/init/hw/init.rc` 加载之后被立即加载. 这些文件的作用如下:
 * `/system/etc/init/` 用于系统核心项目, 例如: SurfaceFlinger, MediaService, logd;
 * `/vendor/etc/init/` 由 SoC 厂商使用, 里面是一些 SoC 功能所需的操作或守护进程;
 * `/odm/etc/init/` 由设备制造商使用, 例如提供运动传感器或者其他周边功能需要的操作或守护进程.
 
->* 以前没有 `first stage` 挂载机制的旧设备能够在 `mount_all` 期间导入初始化脚本，但是不推荐使用, 并且这种用法在 Android Q 之后的设备已被禁止。
+>* 以前没有 `first stage` 挂载机制的旧设备能够在 `mount_all` 期间导入初始化脚本，但是不推荐使用, 并且这种用法在 Android Q 之后的设备上已被禁止。
 
 ### init.rc
 在 `/system/core/rootdir/` 下找到 `init.rc`:
@@ -126,7 +126,7 @@ on zygote-start && property:ro.crypto.state=unencrypted
 ```
 在 `init.rc` 中, 看到了眼熟的 `zygote`, 在这里触发了 `zygote-start`, `zygote`, `netd`, `statsd` 等进程.
 
-### zygote
+## zygote
 在 `/system/core/rootdir/init.zygote64_32.rc` 脚本中:
 ```
 service zygote /system/bin/app_process64 -Xzygote /system/bin --zygote --start-system-server --socket-name=zygote
@@ -392,7 +392,7 @@ Runnable runSelectLoop(String abiList) {
 * USAP 是什么?
 
 ## SystemServer
-在前面 ZygoteInit 的 main 方法调用了 `forkSystemServer()` 方法, 创建了一个 Runnable:
+在前面 ZygoteInit 的 main 方法调用了 `forkSystemServer()` 方法, 返回一个 Runnable 对象:
 ```Java
 private static Runnable forkSystemServer(String abiList, String socketName,
             ZygoteServer zygoteServer) {
@@ -451,7 +451,7 @@ private static Runnable forkSystemServer(String abiList, String socketName,
 }
 ```
 
-上面代码通过 `Zygote.forkSystemServer()` 创建了 system server 进程, 这个方法最终是调用了一个 native 方法 `nativeForkSystemServer()` 来创建进程, 这个方法的实现位于 ` /frameworks/base/core/jni/com_android_internal_os_Zygote.cpp`:
+上面代码通过 `Zygote.forkSystemServer()` 创建了 system server 进程, 这个方法最终是调用了一个 native 方法 `nativeForkSystemServer()` 来创建进程, 这个方法位于 ` /frameworks/base/core/jni/com_android_internal_os_Zygote.cpp`:
 ```C++
 static jint com_android_internal_os_Zygote_nativeForkSystemServer(
         JNIEnv* env, jclass, uid_t uid, gid_t gid, jintArray gids,
@@ -498,7 +498,7 @@ static jint com_android_internal_os_Zygote_nativeForkSystemServer(
     return pid;
 }
 ```
-system server 作为 Zygote fork 的第一个进程, 其地位确实非常高, 到了与 Zygote 同生共死的地步.
+从代码注释中可以看到, 如果 system server 挂掉了, 就会重启 Zygote 进程. system server 作为 Zygote 启动的第一个进程, 其地位确实非常高, 到了与 Zygote 同生共死的地步.
 
 ### system server 的作用
 system server 调用 ZygoteInit 的 `handleSystemServerProcess()` 方法来发挥自己的作用:
@@ -622,7 +622,7 @@ protected static Runnable findStaticMain(String className, String[] argv,
     return new MethodAndArgsCaller(m, argv);
 }
 ```
-这个方法通过反射拿到了 `com.android.server.SystemServer` 的 main 函数, 创建了一个 `MethodAndArgsCaller` 对象返回给 `ZygoteInit` 的 `forkSystemServer()`:
+这个方法通过反射拿到了 `com.android.server.SystemServer` 的 main 方法, 创建了一个 `MethodAndArgsCaller` 对象返回给 `ZygoteInit` 的 `forkSystemServer()`:
 ```Java
  if (startSystemServer) {
     Runnable r = forkSystemServer(abiList, zygoteSocketName, zygoteServer);
@@ -728,7 +728,7 @@ private void run() {
     throw new RuntimeException("Main thread loop unexpectedly exited");
 }
 ```
-上面代码还是比较清楚的, 这里创建了 SystemContex, SystemServiceManager, AlarmManagerService 等一系列我们熟悉的 framework 层服务:
+上面代码还是比较清楚的, 这里启动了 SystemContex, SystemServiceManager, AlarmManagerService 等一系列我们熟悉的 framework 层服务:
 ```Java
 private void startBootstrapServices(@NonNull TimingsTraceAndSlog t) {
     // ...
